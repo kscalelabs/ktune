@@ -91,19 +91,53 @@ def main():
 
     print(f"Collected {len(timestamps)} data points.")
 
-    # Plotting
-    plt.figure(figsize=(12, 6))
-    plt.plot(timestamps, quat_w, label='W')
-    plt.plot(timestamps, quat_x, label='X')
-    plt.plot(timestamps, quat_y, label='Y')
-    plt.plot(timestamps, quat_z, label='Z')
+    # Calculate sampling frequencies
+    frequencies = []
+    frequency_timestamps = []
+    if len(timestamps) > 1:
+        for i in range(1, len(timestamps)):
+            delta_t = timestamps[i] - timestamps[i-1]
+            if delta_t > 1e-9: # Avoid division by zero or near-zero
+                freq = 1.0 / delta_t
+                frequencies.append(freq)
+                frequency_timestamps.append(timestamps[i]) # Time corresponding to the frequency calculation
+            # else:
+                # Optionally handle cases with zero delta_t if needed
+                # print(f"Warning: Zero or very small time difference detected at index {i}")
+        print(f"Calculated {len(frequencies)} frequency points.")
+    else:
+        print("Not enough data points to calculate frequency.")
 
-    plt.title(f'IMU Quaternion Data ({read_duration:.1f}s)')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Quaternion Component Value')
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
+
+    # Plotting
+    fig, axs = plt.subplots(2, 1, figsize=(12, 8), sharex=True) # Create 2 subplots, sharing the x-axis
+
+    # Plot Quaternion Data on the first subplot
+    axs[0].plot(timestamps, quat_w, label='W')
+    axs[0].plot(timestamps, quat_x, label='X')
+    axs[0].plot(timestamps, quat_y, label='Y')
+    axs[0].plot(timestamps, quat_z, label='Z')
+    axs[0].set_title(f'IMU Quaternion Data ({read_duration:.1f}s)')
+    axs[0].set_ylabel('Quaternion Component Value')
+    axs[0].legend()
+    axs[0].grid(True)
+
+    # Plot Frequency Data on the second subplot
+    if frequency_timestamps:
+        axs[1].plot(frequency_timestamps, frequencies, label='Frequency', marker='.', linestyle='-')
+        axs[1].set_title('Sampling Frequency')
+        axs[1].set_ylabel('Frequency (Hz)')
+        # axs[1].set_ylim(bottom=0) # Optional: Set y-axis lower limit if needed
+        axs[1].grid(True)
+        axs[1].legend()
+    else:
+        axs[1].set_title('Sampling Frequency (Not enough data)')
+        axs[1].grid(True)
+
+
+    axs[1].set_xlabel('Time (s)') # X-axis label only needed for the bottom plot due to sharex=True
+    plt.tight_layout() # Adjust layout to prevent overlapping titles/labels
+
     # print("Displaying plot...")
     # plt.show()
     output_filename = "imu_quaternion_plot.png"
