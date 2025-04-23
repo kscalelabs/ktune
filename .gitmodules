@@ -1,3 +1,6 @@
 [submodule "bim/imu"]
 	path = bim/imu
 	url = git@github.com:kscalelabs/imu.git
+[submodule "kos-kbot"]
+	path = kos-kbot
+	url = https://github.com/kscalelabs/kos-kbot.git
