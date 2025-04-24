@@ -59,14 +59,13 @@ def save_data(data):
     
     # Determine base directory relative to this file and build nested folders: data/YYYYMMDD/imu/{amplitude}_{frequency}
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    date_str = datetime.now().strftime("%Y%m%d")
-    file_prefix = f"amp{data.amplitude}_freq{data.frequency}"
-    dir_path = os.path.join(base_dir, "../data", f"{date_str}_real")
+    fldr_prefix = f"amp{data.amplitude}_freq{data.frequency}"
+    dir_path = os.path.join(base_dir, "../data", fldr_prefix)
     os.makedirs(dir_path, exist_ok=True)
     
     # Generate filename with timestamp
-    timestamp = datetime.now().strftime("%H%M%S")
-    filename = os.path.join(dir_path, f"{file_prefix}_{timestamp}.pkl")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = os.path.join(dir_path, f"real_{timestamp}.pkl")
     
     # Convert IMUData object to dictionary
     data_dict = {
@@ -246,7 +245,7 @@ async def main():
                 data.loop_freq.append(1.0 / per_loop_time)
                 await asyncio.sleep(per_loop_time - (time.time() - cycle_start_time))
 
-            data.timestamp.append(time.time())
+            data.timestamp.append(time.time() - start_time)
 
     except KeyboardInterrupt:
         logger.warning("Keyboard interrupt")

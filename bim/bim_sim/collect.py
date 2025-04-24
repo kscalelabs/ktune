@@ -1,6 +1,7 @@
 import argparse
 import csv
 import json
+import colorlogging
 import logging
 import math
 import os
@@ -15,8 +16,8 @@ import mujoco
 import mujoco.viewer
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+colorlogging.configure()
 
 from dataclasses import dataclass
 from typing import List
@@ -65,14 +66,13 @@ def save_data(data):
     
     # Determine base directory relative to this file and build nested folders: data/YYYYMMDD/imu/{amplitude}_{frequency}
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    date_str = datetime.now().strftime("%Y%m%d")
-    file_prefix = f"amp{data.amplitude}_freq{data.frequency}"
-    dir_path = os.path.join(base_dir, "../data", f"{date_str}_sim")
+    fldr_prefix = f"amp{data.amplitude}_freq{data.frequency}"
+    dir_path = os.path.join(base_dir, "../data", fldr_prefix)
     os.makedirs(dir_path, exist_ok=True)
     
     # Generate filename with timestamp
-    timestamp = datetime.now().strftime("%H%M%S")
-    filename = os.path.join(dir_path, f"{file_prefix}_{timestamp}.pkl")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = os.path.join(dir_path, f"sim_{timestamp}.pkl")
     
     # Convert IMUData object to dictionary
     data_dict = {
@@ -132,8 +132,16 @@ def per_loop(data, model, mj_data, sensor_ids):
             data.quat_y.append(float(vals[2]))
             data.quat_z.append(float(vals[3]))
             
+            
+
+            # Check if quaternion norm is non-zero
+            quat = np.array([data.quat_x[-1], data.quat_y[-1], data.quat_z[-1], data.quat_w[-1]])
+            quat_norm = np.linalg.norm(quat)
+            if quat_norm < 1e-10:  # Threshold to check for effectively zero norm
+                continue
+
             # Convert to Euler angles (in degrees)
-            r = Rotation.from_quat([data.quat_x[-1], data.quat_y[-1], data.quat_z[-1], data.quat_w[-1]])
+            r = Rotation.from_quat(quat)
             euler_from_quat = r.as_euler('xyz', degrees=True)
             data.euler_x_quat.append(euler_from_quat[0])
             data.euler_y_quat.append(euler_from_quat[1])
@@ -174,7 +182,7 @@ def main():
         "--data_freq", type=int, default=100, help="Data frequency in hz (default: 100)"
     )
     parser.add_argument(
-        "--disable_simulation", action="store_true", help="Run simulation without visualization"
+        "--headless", action="store_true", help="Run simulation without visualization"
     )
     parser.add_argument(
         "--joint_name", type=str, default="servo_out", help="Name of the joint/actuator to control"
@@ -189,7 +197,7 @@ def main():
 
     # Launch passive viewer if simulation is not disabled
     viewer = None
-    if not args.disable_simulation:
+    if not args.headless:
         viewer = mujoco.viewer.launch_passive(model, mj_data)
 
     # Precompute IDs for body and sensors
@@ -265,7 +273,7 @@ def main():
             step += 1
 
             # Viewer update if enabled
-            if viewer and not args.disable_simulation:
+            if viewer and not args.headless:
                 if hasattr(viewer, "sync"):
                     viewer.sync()
 
@@ -277,7 +285,7 @@ def main():
         logger.info("Simulation interrupted by user")
         save_data(data)
     finally:
-        if viewer and hasattr(viewer, "close") and not args.disable_simulation:
+        if viewer and hasattr(viewer, "close") and not args.headless:
             viewer.close()
         
         # Save the collected data
