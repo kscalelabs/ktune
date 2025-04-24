@@ -238,7 +238,7 @@ def main():
         raise ValueError(f"Actuator '{args.joint_name}' not found")
 
     try:
-        while running and sim_time < args.duration:
+        while sim_time < args.duration:
             cycle_start_time = time.time()
 
             angle = math.radians(args.amplitude) * math.sin(2 * math.pi * args.frequency * sim_time)
@@ -249,7 +249,7 @@ def main():
 
                 per_loop(data, model, mj_data, sensor_ids)
 
-                data.timestamp.append(time.time() - start_wall)
+                data.timestamp.append(sim_time)
 
                 # Calculate loop frequency
                 current_loop_time = time.time() - cycle_start_time
@@ -268,9 +268,6 @@ def main():
             if viewer and not args.disable_simulation:
                 if hasattr(viewer, "sync"):
                     viewer.sync()
-                    running = viewer.is_running()
-                elif hasattr(viewer, "render"):
-                    running = viewer.render()
 
             # Status logging
             if step % (1000) == 0:  # Log every second (at 1000 Hz)
