@@ -1,6 +1,7 @@
 import pickle
 import os
 import matplotlib.pyplot as plt
+import math
 
 # Use a professional style
 plt.style.use('ggplot')
@@ -30,6 +31,29 @@ print(real_data.keys())
 print(sim_data.keys())
 
 
+
+min_len = math.inf
+for key, val in real_data.items():
+    if isinstance(val, list):
+        min_len = min(min_len, len(val))
+
+for key, val in sim_data.items():
+    if isinstance(val, list):
+        min_len = min(min_len, len(val))
+
+for key, val in real_data.items():
+    if isinstance(val, list):
+        truncated = len(val) - min_len
+        if truncated > 0:
+            print(f"Truncating {truncated} values from real data['{key}']")
+        real_data[key] = real_data[key][:min_len]
+
+for key, val in sim_data.items():
+    if isinstance(val, list):
+        truncated = len(val) - min_len
+        if truncated > 0:
+            print(f"Truncating {truncated} values from sim data['{key}']")
+        sim_data[key] = sim_data[key][:min_len]
 
 def plot_side_by_side(sim, real):
     """Figure 1: side-by-side subplots"""
