@@ -1,0 +1,5 @@
+colorlogging==0.0.2
+mujoco==3.3.1
+numpy==2.2.5
+pykos==0.7.6
+scipy==1.15.2
