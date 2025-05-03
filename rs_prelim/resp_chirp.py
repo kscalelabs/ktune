@@ -25,44 +25,28 @@ async def sample_loop(kos, actuator_id, data, test_start, duration, commanded_po
 
     
 async def run_chirp_test(
-    actuator_id, joint_name,
+    kos, actuator_id, joint_name,
     kp, kd, max_torque, min_pos, max_pos,
     start_freq, end_freq, chirp_duration,
     start_pos, sim, step_size,
     armature, frictionloss, actuatorfrcrange, damping):
 
     logger.info(f"Running test with kp={kp:.2f}, kd={kd:.2f}")
-
-    kos = pykos.KOS("0.0.0.0")
     
-    # Initialize data storage
     data = []
     test_start_time = 0
     commanded_position_ref = [start_pos]
     commanded_freq_ref = [start_freq]
     duration = chirp_duration + 1.0 # 0.5 sec for start, 0.5 for end
 
-    # Configure the actuator
-    await kos.actuator.configure_actuator(
-        actuator_id=actuator_id,
-        kp=kp,
-        kd=kd,
-        max_torque=max_torque,
-        torque_enabled=True,
-    )
-
-    # Move to start position
     logger.info(f"Moving to start position: {start_pos} degrees")
     await kos.actuator.command_actuators([{"actuator_id": actuator_id, "position": start_pos}])
     await asyncio.sleep(1.0)
     
-    # Run the test
     test_start_time = time.monotonic()
     
-    # Start sampling
     sampler = asyncio.create_task(sample_loop(kos, actuator_id, data, test_start_time, duration, commanded_position_ref, commanded_freq_ref))
 
-     # Calculate chirp sweep rate based on start and end frequencies and duration
     k = (end_freq - start_freq) / duration  # Rate of frequency change
     f0 = start_freq
     
@@ -114,11 +98,11 @@ async def run_chirp_test(
 
     # Save collected data to JSON
     simorreal = "sim" if sim else "real"
-    fldr_name = datetime.now().strftime("%Y%m%d")
+    fldr_name = f"{datetime.now().strftime('%Y%m%d')}/chirp"
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Use actual kp and kd values in the filename
-    filename = f"{fldr_name}/{simorreal}_{actuator_id}_kp{kp:.2f}_kd{kd:.2f}_{timestamp_str}.json"
+    filename = f"{fldr_name}/{simorreal}_{actuator_id}_damp{damping}.json"
     
     # Convert data for JSON serialization
     json_data = [
@@ -161,12 +145,34 @@ async def run_chirp_test(
     logger.info(f"Data saved to {filename}")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--sim", action="store_true", help="Run in simulation mode")
-    args = parser.parse_args()
+
+async def main():
+    kos = pykos.KOS("0.0.0.0")
     
-    for joint_name in ["dof_right_hip_pitch_04", "dof_right_hip_roll_03", "dof_right_hip_yaw_03", "dof_right_knee_04", "dof_right_ankle_02"]:
+    joint_names = [
+        "dof_right_hip_pitch_04",
+        "dof_right_hip_roll_03",
+        "dof_right_hip_yaw_03",
+        "dof_right_knee_04",
+        "dof_right_ankle_02",
+        "dof_left_hip_pitch_04",
+        "dof_left_hip_roll_03",
+        "dof_left_hip_yaw_03",
+        "dof_left_knee_04",
+        "dof_left_ankle_02",
+        "dof_right_shoulder_pitch_03",
+        "dof_right_shoulder_roll_03",
+        "dof_right_shoulder_yaw_02",
+        "dof_right_elbow_02",
+        "dof_right_wrist_00",
+        "dof_left_shoulder_pitch_03",
+        "dof_left_shoulder_roll_03",
+        "dof_left_shoulder_yaw_02",
+        "dof_left_elbow_02",
+        "dof_left_wrist_00",
+    ]
+
+    for joint_name in joint_names:
         # Setup test configuration
         TEST_CONFIGS = {
             "joint_name": joint_name,
@@ -183,16 +189,33 @@ if __name__ == "__main__":
         if joint_name == "dof_right_knee_04":
             TEST_CONFIGS["start_pos"] = -10.0
 
+        if joint_name == "dof_left_knee_04":
+            TEST_CONFIGS["start_pos"] = 10.0
+
+        if joint_name == "dof_right_elbow_02":
+            TEST_CONFIGS["start_pos"] = 10.0
+
+        if joint_name == "dof_left_elbow_02":
+            TEST_CONFIGS["start_pos"] = -10.0
+
+        if joint_name == "dof_left_shoulder_roll_03":
+            TEST_CONFIGS["start_pos"] = 10.0
+
+        if joint_name == "dof_right_shoulder_roll_03":
+            TEST_CONFIGS["start_pos"] = -10.0
+        
+        
+        
+
         # Read metadata.json to get joint-specific values
         with open('metadata.json', 'r') as f:
             metadata = json.load(f)
         
-        joint_name = TEST_CONFIGS["joint_name"]
         joint_metadata = metadata["joint_name_to_metadata"].get(joint_name)
         
         if not joint_metadata:
             logger.error(f"Joint name {joint_name} not found in metadata.json")
-            exit(1)
+            continue
             
         # Get actuator and passive parameters
         TEST_CONFIGS["kp"] = float(joint_metadata["kp"])
@@ -218,5 +241,29 @@ if __name__ == "__main__":
 
         logger.info(f"Base Kp: {TEST_CONFIGS['kp']}, Base Kd: {TEST_CONFIGS['kd']}, Max Torque: {TEST_CONFIGS['max_torque']}")
 
+        for joint_name, config in metadata["joint_name_to_metadata"].items():
+            config_actuator_id = config["id"]
+            config_kp = float(config["kp"])
+            config_kd = float(config["kd"])
+            config_max_torque = float(config["max_torque"])
+            
+            # logger.info(f"Configuring {joint_name} (ID: {actuator_id}) with kp={kp}, kd={kd}, max_torque={max_torque}")
+            
+            await kos.actuator.configure_actuator(
+                actuator_id=config_actuator_id,
+                kp=config_kp,
+                kd=config_kd,
+                max_torque=config_max_torque,
+                torque_enabled=True,
+            )
+
+      
         # Run the kp/kd sweep
-        asyncio.run(run_chirp_test(actuator_id, **TEST_CONFIGS))
+        await run_chirp_test(kos, actuator_id, **TEST_CONFIGS)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sim", action="store_true", help="Run in simulation mode")
+    args = parser.parse_args()
+    
+    asyncio.run(main())

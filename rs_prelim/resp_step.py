@@ -26,11 +26,10 @@ async def sample_loop(kos, actuator_id, data, test_start, duration, commanded_po
 
 
 async def run_step_test(
-    actuator_ids, joint_name,
+    kos, actuator_id, joint_name,
     kp, kd, max_torque, min_pos, max_pos,
     step_size, step_hold_time, 
-    step_count, start_pos, 
-    multiple_mode, random_mode, seed, sim,
+    step_count, start_pos, sim,
     armature, frictionloss, actuatorfrcrange, damping):
 
 
@@ -38,23 +37,19 @@ async def run_step_test(
     
     # Initialize data storage
     data = []
-    sample_rate = 100  # Hz
-    sample_interval = 1.0 / sample_rate
-        # Current commanded position
-    commanded_position = start_pos
 
-    await kos.actuator.configure_actuator(
-        actuator_id=actuator_ids[0],
-        kp=kp,
-        kd=kd,
-        max_torque=max_torque,
-        torque_enabled=True,
-    )
+    # await kos.actuator.configure_actuator(
+    #     actuator_id=actuator_id,
+    #     kp=kp,
+    #     kd=kd,
+    #     max_torque=max_torque,
+    #     torque_enabled=True,
+    # )
 
     logger.info(f"Moving to start position: {start_pos} degrees")
     commands = [
         {
-            "actuator_id": actuator_ids[0],
+            "actuator_id": actuator_id,
             "position": start_pos,
         }
     ]
@@ -80,7 +75,7 @@ async def run_step_test(
         target_pos = start_pos
         logger.warning(f"Rejected, Target position {target_pos} is less than min position {min_pos}")
 
-    sampler = asyncio.create_task(sample_loop(kos, actuator_ids[0], data, test_start_time, duration, commanded_position_ref))
+    sampler = asyncio.create_task(sample_loop(kos, actuator_id, data, test_start_time, duration, commanded_position_ref))
     
     await asyncio.sleep(1.0)
 
@@ -91,7 +86,6 @@ async def run_step_test(
             'actuator_id': actuator_id,
             'position': target_pos,
         }
-        for actuator_id in actuator_ids
     ]
     await kos.actuator.command_actuators(commands)
     await asyncio.sleep(step_hold_time)
@@ -103,7 +97,6 @@ async def run_step_test(
             'actuator_id': actuator_id,
             'position': 0.0,
         }
-        for actuator_id in actuator_ids
     ]
     await kos.actuator.command_actuators(commands)
 
@@ -113,9 +106,8 @@ async def run_step_test(
 
     # Save collected data to JSON
     simorreal = "sim" if sim else "real"
-    fldr_name =  datetime.now().strftime("%Y%m%d")
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{fldr_name}/{simorreal}_{actuator_ids[0]}_{timestamp_str}.json"
+    fldr_name = f"{datetime.now().strftime('%Y%m%d')}/step"
+    filename = f"{fldr_name}/{simorreal}_{actuator_id}_damp{damping}.json"
     
     # Convert data to list of dictionaries for JSON serialization
     json_data = []
@@ -137,7 +129,7 @@ async def run_step_test(
             "step_hold_time": step_hold_time,
             "step_count": step_count,
             "start_pos": start_pos,
-            "actuator_ids": actuator_ids,
+            "actuator_id": actuator_id,
             "mode": 'sim' if sim else 'real',
             "armature": armature,
             "frictionloss": frictionloss,
@@ -155,21 +147,35 @@ async def run_step_test(
     logger.info(f"Data saved to {filename}")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--randomize", action="store_true")
-    parser.add_argument("--multiple", action="store_true")
-    parser.add_argument("--sim", action="store_true")
-    args = parser.parse_args()
 
-    if args.multiple and args.randomize:
-        logger.error("Cannot randomize and single step at the same time")
-        exit(1)
-    elif args.randomize:
-        logger.warning("Confirm you want to randomize, and you have set the min and max pos accordingly")
-        input("Press Enter to continue")
+async def main():
+    kos = pykos.KOS("0.0.0.0")
     
-    for joint_name in ["dof_right_hip_pitch_04", "dof_right_hip_roll_03", "dof_right_hip_yaw_03", "dof_right_knee_04", "dof_right_ankle_02"]:
+    joint_names = [
+        "dof_right_hip_pitch_04",
+        "dof_right_hip_roll_03",
+        "dof_right_hip_yaw_03",
+        "dof_right_knee_04",
+        "dof_right_ankle_02",
+        "dof_left_hip_pitch_04",
+        "dof_left_hip_roll_03",
+        "dof_left_hip_yaw_03",
+        "dof_left_knee_04",
+        "dof_left_ankle_02",
+        "dof_right_shoulder_pitch_03",
+        "dof_right_shoulder_roll_03",
+        "dof_right_shoulder_yaw_02",
+        "dof_right_elbow_02",
+        "dof_right_wrist_00",
+        "dof_left_shoulder_pitch_03",
+        "dof_left_shoulder_roll_03",
+        "dof_left_shoulder_yaw_02",
+        "dof_left_elbow_02",
+        "dof_left_wrist_00",
+    ]
+
+
+    for joint_name in joint_names:
         TEST_CONFIGS = {
             "joint_name": joint_name,
             "min_pos": -30.0,
@@ -181,12 +187,35 @@ if __name__ == "__main__":
 
             "step_size": -10.0,       # degrees
 
-            "multiple_mode": args.multiple,
-            "random_mode": args.randomize,
-            "seed": 43, 
-
             "sim": args.sim,
         }
+
+        if joint_name == "dof_right_knee_04":
+            TEST_CONFIGS["step_size"] = -10.0
+
+        if joint_name == "dof_left_knee_04":
+            TEST_CONFIGS["step_size"] = 10.0
+
+        if joint_name == "dof_right_elbow_02":
+            TEST_CONFIGS["step_size"] = 10.0
+
+        if joint_name == "dof_left_elbow_02":
+            TEST_CONFIGS["step_size"] = -10.0
+
+        if joint_name == "dof_left_shoulder_roll_03":
+            TEST_CONFIGS["step_size"] = 10.0
+
+        if joint_name == "dof_right_shoulder_roll_03":
+            TEST_CONFIGS["step_size"] = -10.0
+
+        if joint_name == "dof_left_hip_roll_03":
+            TEST_CONFIGS["step_size"] = 10.0
+        
+        if joint_name == "dof_left_shoulder_roll_03":
+            TEST_CONFIGS["step_size"] = 10.0
+    
+        
+        
 
         # Read metadata.json to get joint-specific kp, kd, and max_torque values
         with open('metadata.json', 'r') as f:
@@ -221,6 +250,32 @@ if __name__ == "__main__":
             exit(1)
 
         logger.info(f"Kp: {TEST_CONFIGS['kp']}, Kd: {TEST_CONFIGS['kd']}, Max Torque: {TEST_CONFIGS['max_torque']}")
+        
+        for config_joint_name, config_joint_metadata in metadata["joint_name_to_metadata"].items():
+            config_actuator_id = config_joint_metadata["id"]
+            config_kp = float(config_joint_metadata["kp"])
+            config_kd = float(config_joint_metadata["kd"])
+            config_max_torque = float(config_joint_metadata["max_torque"])
+            
+            # logger.info(f"Configuring {joint_name} (ID: {actuator_id}) with kp={kp}, kd={kd}, max_torque={max_torque}")
+            
+            await kos.actuator.configure_actuator(
+                actuator_id=config_actuator_id,
+                kp=config_kp,
+                kd=config_kd,
+                max_torque=config_max_torque,
+                torque_enabled=True,
+            )
 
-        asyncio.run(run_step_test([actuator_id], **TEST_CONFIGS))
+
+        asyncio.run(run_step_test(kos, actuator_id, **TEST_CONFIGS))
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sim", action="store_true")
+    args = parser.parse_args()
+
+    asyncio.run(main())
+
 

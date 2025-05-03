@@ -1,171 +1,171 @@
 {
-    "joint_name_to_metadata": {
-      "dof_left_shoulder_pitch_03": {
-        "actuator_type": "robstride_03",
-        "id": 11,
-        "kp": "100.0",
-        "kd": "4.0", 
-        "max_torque": "40.0"
-      },
-      "dof_left_shoulder_roll_03": {
-        "actuator_type": "robstride_03",
-        "id": 12,
-        "kp": "100.0",
-        "kd": "4.0",
-        "max_torque": "40.0"
-      },
-      "dof_left_shoulder_yaw_02": {
-        "actuator_type": "robstride_02",
-        "id": 13,
-        "kp": "40.0",
-        "kd": "2.0",
-        "max_torque": "14.0"
-      },
-      "dof_left_elbow_02": {
-        "actuator_type": "robstride_02",
-        "id": 14,
-        "kp": "40.0",
-        "kd": "2.0",
-        "max_torque": "14.0"
-      },
-      "dof_left_wrist_00": {
-        "actuator_type": "robstride_00",
-        "id": 15,
-        "kp": "20.0",
-        "kd": "2.0",
-        "max_torque": "1.0"
-      },
-      "dof_right_shoulder_pitch_03": {
-        "actuator_type": "robstride_03",
-        "id": 21,
-        "kp": "100.0",
-        "kd": "4.0",
-        "max_torque": "40.0"
-      },
-      "dof_right_shoulder_roll_03": {
-        "actuator_type": "robstride_03",
-        "id": 22,
-        "kp": "100.0",
-        "kd": "4.0",
-        "max_torque": "40.0"
-      },
-      "dof_right_shoulder_yaw_02": {
-        "actuator_type": "robstride_02",
-        "id": 23,
-        "kp": "40.0",
-        "kd": "2.0",
-        "max_torque": "14.0"
-      },
-      "dof_right_elbow_02": {
-        "actuator_type": "robstride_02",
-        "id": 24,
-        "kp": "40.0",
-        "kd": "2.0",
-        "max_torque": "14.0"
-      },
-      "dof_right_wrist_00": {
-        "actuator_type": "robstride_00",
-        "id": 25,
-        "kp": "20.0",
-        "kd": "2.0",
-        "max_torque": "1.0"
-      },
-      "dof_left_hip_pitch_04": {
-        "actuator_type": "robstride_04",
-        "id": 31,
-        "kp": "150.0",
-        "kd": "8.0",
-        "max_torque": "60.0"
-      },
-      "dof_left_hip_roll_03": {
-        "actuator_type": "robstride_03",
-        "id": 32,
-        "kp": "200.0",
-        "kd": "8.0",
-        "max_torque": "40.0"
-      },
-      "dof_left_hip_yaw_03": {
-        "actuator_type": "robstride_03",
-        "id": 33,
-        "kp": "100.0",
-        "kd": "4.0",
-        "max_torque": "40.0"
-      },
-      "dof_left_knee_04": {
-        "actuator_type": "robstride_04",
-        "id": 34,
-        "kp": "150.0",
-        "kd": "8.0",
-        "max_torque": "60.0"
-      },
-      "dof_left_ankle_02": {
-        "actuator_type": "robstride_02",
-        "id": 35,
-        "kp": "40.0",
-        "kd": "8.0",
-        "max_torque": "14.0"
-      },
-      "dof_right_hip_pitch_04": {
-        "actuator_type": "robstride_04",
-        "id": 41,
-        "kp": "150.0",
-        "kd": "8.0",
-        "max_torque": "60.0"
-      },
-      "dof_right_hip_roll_03": {
-        "actuator_type": "robstride_03",
-        "id": 42,
-        "kp": "200.0",
-        "kd": "8.0",
-        "max_torque": "40.0"
-      },
-      "dof_right_hip_yaw_03": {
-        "actuator_type": "robstride_03",
-        "id": 43,
-        "kp": "100.0",
-        "kd": "4.0",
-        "max_torque": "40.0"
-      },
-      "dof_right_knee_04": {
-        "actuator_type": "robstride_04",
-        "id": 44,
-        "kp": "150.0",
-        "kd": "8.0",
-        "max_torque": "60.0"
-      },
-      "dof_right_ankle_02": {
-        "actuator_type": "robstride_02",
-        "id": 45,
-        "kp": "40.0",
-        "kd": "8.0",
-        "max_torque": "14.0"
-      }
+  "joint_name_to_metadata": {
+    "dof_left_shoulder_pitch_03": {
+      "actuator_type": "robstride_03",
+      "id": 11,
+      "kp": "100.0",
+      "kd": "4.0",
+      "max_torque": "40.0"
     },
-    "actuator_type_passive_param": {
-        "robstride_00": {
-            "armature": "0.001",
-            "frictionloss": "0.01",
-            "actuatorfrcrange": "-14.0 14.0",
-            "damping": "0.1"
-        },
-        "robstride_02": {
-            "armature": "0.0042",
-            "frictionloss": "0.01",
-            "actuatorfrcrange": "-17.0 17.0",
-            "damping": "0.1"
-        },
-        "robstride_03": {
-            "armature": "0.02",
-            "frictionloss": "0.01",
-            "actuatorfrcrange": "-60.0 60.0",
-            "damping": "0.0"
-        },
-        "robstride_04": {
-            "armature": "0.04",
-            "frictionloss": "0.01",
-            "actuatorfrcrange": "-120.0 120.0",
-            "damping": "0.1"
-        }
+    "dof_left_shoulder_roll_03": {
+      "actuator_type": "robstride_03",
+      "id": 12,
+      "kp": "100.0",
+      "kd": "4.0",
+      "max_torque": "40.0"
     },
-    "control_frequency": "50"
-  }
+    "dof_left_shoulder_yaw_02": {
+      "actuator_type": "robstride_02",
+      "id": 13,
+      "kp": "40.0",
+      "kd": "2.0",
+      "max_torque": "14.0"
+    },
+    "dof_left_elbow_02": {
+      "actuator_type": "robstride_02",
+      "id": 14,
+      "kp": "40.0",
+      "kd": "2.0",
+      "max_torque": "14.0"
+    },
+    "dof_left_wrist_00": {
+      "actuator_type": "robstride_00",
+      "id": 15,
+      "kp": "20.0",
+      "kd": "2.0",
+      "max_torque": "1.0"
+    },
+    "dof_right_shoulder_pitch_03": {
+      "actuator_type": "robstride_03",
+      "id": 21,
+      "kp": "100.0",
+      "kd": "4.0",
+      "max_torque": "40.0"
+    },
+    "dof_right_shoulder_roll_03": {
+      "actuator_type": "robstride_03",
+      "id": 22,
+      "kp": "100.0",
+      "kd": "4.0",
+      "max_torque": "40.0"
+    },
+    "dof_right_shoulder_yaw_02": {
+      "actuator_type": "robstride_02",
+      "id": 23,
+      "kp": "40.0",
+      "kd": "2.0",
+      "max_torque": "14.0"
+    },
+    "dof_right_elbow_02": {
+      "actuator_type": "robstride_02",
+      "id": 24,
+      "kp": "40.0",
+      "kd": "2.0",
+      "max_torque": "14.0"
+    },
+    "dof_right_wrist_00": {
+      "actuator_type": "robstride_00",
+      "id": 25,
+      "kp": "20.0",
+      "kd": "2.0",
+      "max_torque": "1.0"
+    },
+    "dof_left_hip_pitch_04": {
+      "actuator_type": "robstride_04",
+      "id": 31,
+      "kp": "150.0",
+      "kd": "8.0",
+      "max_torque": "60.0"
+    },
+    "dof_left_hip_roll_03": {
+      "actuator_type": "robstride_03",
+      "id": 32,
+      "kp": "200.0",
+      "kd": "8.0",
+      "max_torque": "40.0"
+    },
+    "dof_left_hip_yaw_03": {
+      "actuator_type": "robstride_03",
+      "id": 33,
+      "kp": "100.0",
+      "kd": "4.0",
+      "max_torque": "40.0"
+    },
+    "dof_left_knee_04": {
+      "actuator_type": "robstride_04",
+      "id": 34,
+      "kp": "150.0",
+      "kd": "8.0",
+      "max_torque": "60.0"
+    },
+    "dof_left_ankle_02": {
+      "actuator_type": "robstride_02",
+      "id": 35,
+      "kp": "40.0",
+      "kd": "8.0",
+      "max_torque": "14.0"
+    },
+    "dof_right_hip_pitch_04": {
+      "actuator_type": "robstride_04",
+      "id": 41,
+      "kp": "150.0",
+      "kd": "8.0",
+      "max_torque": "60.0"
+    },
+    "dof_right_hip_roll_03": {
+      "actuator_type": "robstride_03",
+      "id": 42,
+      "kp": "200.0",
+      "kd": "8.0",
+      "max_torque": "40.0"
+    },
+    "dof_right_hip_yaw_03": {
+      "actuator_type": "robstride_03",
+      "id": 43,
+      "kp": "100.0",
+      "kd": "4.0",
+      "max_torque": "40.0"
+    },
+    "dof_right_knee_04": {
+      "actuator_type": "robstride_04",
+      "id": 44,
+      "kp": "150.0",
+      "kd": "8.0",
+      "max_torque": "60.0"
+    },
+    "dof_right_ankle_02": {
+      "actuator_type": "robstride_02",
+      "id": 45,
+      "kp": "40.0",
+      "kd": "8.0",
+      "max_torque": "14.0"
+    }
+  },
+  "actuator_type_passive_param": {
+    "robstride_00": {
+      "armature": "0.001",
+      "frictionloss": "0.1",
+      "actuatorfrcrange": "-14.0 14.0",
+      "damping": "0.0001"
+    },
+    "robstride_02": {
+      "armature": "0.0042",
+      "frictionloss": "0.1",
+      "actuatorfrcrange": "-17.0 17.0",
+      "damping": "0.0001"
+    },
+    "robstride_03": {
+      "armature": "0.02",
+      "frictionloss": "0.2",
+      "actuatorfrcrange": "-60.0 60.0",
+      "damping": "0.01"
+    },
+    "robstride_04": {
+      "armature": "0.04",
+      "frictionloss": "0.2",
+      "actuatorfrcrange": "-120.0 120.0",
+      "damping": "0.01"
+    }
+  },
+  "control_frequency": "50"
+}

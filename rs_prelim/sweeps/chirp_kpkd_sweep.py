@@ -114,11 +114,11 @@ async def run_chirp_test(
 
     # Save collected data to JSON
     simorreal = "sim" if sim else "real"
-    fldr_name = f"chirp_f{frictionloss}_d{damping}"
+    fldr_name = f"data/sim_data/f{frictionloss}_d{damping}/chirp"
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Use actual kp and kd values in the filename
-    filename = f"{fldr_name}/{simorreal}_{actuator_id}_kp{kp:.2f}_kd{kd:.2f}_{timestamp_str}.json"
+    filename = f"{fldr_name}/{actuator_id}_kp{kp:.2f}_kd{kd:.2f}.json"
     
     # Convert data for JSON serialization
     json_data = [
@@ -201,51 +201,55 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Setup test configuration
-    TEST_CONFIGS = {
-        "joint_name": "dof_right_hip_pitch_04",
-        "min_pos": -30.0,
-        "max_pos": 30.0,
-        "chirp_duration": 6.0,
-        "start_pos": 0.0,
-        "step_size": -10.0,
-        "start_freq": 0.2,
-        "end_freq": 1.5,
-        "sim": args.sim,
-    }
+    for joint_name in ["dof_right_hip_pitch_04", "dof_right_hip_roll_03", "dof_right_hip_yaw_03", "dof_right_knee_04", "dof_right_ankle_02"]:
+        TEST_CONFIGS = {
+            "joint_name": joint_name,
+            "min_pos": -30.0,
+            "max_pos": 30.0,
+            "chirp_duration": 6.0,
+            "start_pos": 0.0,
+            "step_size": -10.0,
+            "start_freq": 0.2,
+            "end_freq": 1.5,
+            "sim": args.sim,
+        }
 
-    # Read metadata.json to get joint-specific values
-    with open('metadata.json', 'r') as f:
-        metadata = json.load(f)
-    
-    joint_name = TEST_CONFIGS["joint_name"]
-    joint_metadata = metadata["joint_name_to_metadata"].get(joint_name)
-    
-    if not joint_metadata:
-        logger.error(f"Joint name {joint_name} not found in metadata.json")
-        exit(1)
+        if joint_name == "dof_right_knee_04":
+            TEST_CONFIGS["start_pos"] = -10.0
+
+        # Read metadata.json to get joint-specific values
+        with open('metadata.json', 'r') as f:
+            metadata = json.load(f)
         
-    # Get actuator and passive parameters
-    TEST_CONFIGS["kp"] = float(joint_metadata["kp"])
-    TEST_CONFIGS["kd"] = float(joint_metadata["kd"])
-    TEST_CONFIGS["max_torque"] = float(joint_metadata["max_torque"])
-    actuator_id = joint_metadata["id"]
-    
-    # Get passive parameters
-    actuator_type = joint_metadata.get("actuator_type")
-    if actuator_type and actuator_type in metadata["actuator_type_passive_param"]:
-        passive_params = metadata["actuator_type_passive_param"][actuator_type]
-        TEST_CONFIGS["armature"] = float(passive_params["armature"])
-        TEST_CONFIGS["frictionloss"] = float(passive_params["frictionloss"])
-        TEST_CONFIGS["damping"] = float(passive_params["damping"])
-        # Parse actuatorfrcrange
-        frc_range = passive_params["actuatorfrcrange"].split()
-        TEST_CONFIGS["actuatorfrcrange"] = [float(frc_range[0]), float(frc_range[1])]
+        joint_name = TEST_CONFIGS["joint_name"]
+        joint_metadata = metadata["joint_name_to_metadata"].get(joint_name)
         
-        logger.info(f"Added passive params: armature={TEST_CONFIGS['armature']}, "
-                    f"frictionloss={TEST_CONFIGS['frictionloss']}, "
-                    f"actuatorfrcrange={TEST_CONFIGS['actuatorfrcrange']}")
+        if not joint_metadata:
+            logger.error(f"Joint name {joint_name} not found in metadata.json")
+            exit(1)
+            
+        # Get actuator and passive parameters
+        TEST_CONFIGS["kp"] = float(joint_metadata["kp"])
+        TEST_CONFIGS["kd"] = float(joint_metadata["kd"])
+        TEST_CONFIGS["max_torque"] = float(joint_metadata["max_torque"])
+        actuator_id = joint_metadata["id"]
+        
+        # Get passive parameters
+        actuator_type = joint_metadata.get("actuator_type")
+        if actuator_type and actuator_type in metadata["actuator_type_passive_param"]:
+            passive_params = metadata["actuator_type_passive_param"][actuator_type]
+            TEST_CONFIGS["armature"] = float(passive_params["armature"])
+            TEST_CONFIGS["frictionloss"] = float(passive_params["frictionloss"])
+            TEST_CONFIGS["damping"] = float(passive_params["damping"])
+            # Parse actuatorfrcrange
+            frc_range = passive_params["actuatorfrcrange"].split()
+            TEST_CONFIGS["actuatorfrcrange"] = [float(frc_range[0]), float(frc_range[1])]
+            
+            logger.info(f"Added passive params: armature={TEST_CONFIGS['armature']}, "
+                        f"frictionloss={TEST_CONFIGS['frictionloss']}, "
+                        f"actuatorfrcrange={TEST_CONFIGS['actuatorfrcrange']}")
 
-    logger.info(f"Base Kp: {TEST_CONFIGS['kp']}, Base Kd: {TEST_CONFIGS['kd']}, Max Torque: {TEST_CONFIGS['max_torque']}")
+        logger.info(f"Base Kp: {TEST_CONFIGS['kp']}, Base Kd: {TEST_CONFIGS['kd']}, Max Torque: {TEST_CONFIGS['max_torque']}")
 
-    # Run the kp/kd sweep
-    asyncio.run(run_kpkd_sweep(actuator_id, TEST_CONFIGS))
+        # Run the kp/kd sweep
+        asyncio.run(run_kpkd_sweep(actuator_id, TEST_CONFIGS))
