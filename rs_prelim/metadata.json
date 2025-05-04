@@ -158,13 +158,13 @@
       "armature": "0.02",
       "frictionloss": "0.2",
       "actuatorfrcrange": "-60.0 60.0",
-      "damping": "0.001"
+      "damping": "0.0"
     },
     "robstride_04": {
       "armature": "0.04",
       "frictionloss": "0.2",
       "actuatorfrcrange": "-120.0 120.0",
-      "damping": "0.001"
+      "damping": "0.0"
     }
   },
   "control_frequency": "50"
