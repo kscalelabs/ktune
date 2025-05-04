@@ -95,7 +95,7 @@ async def run_step_test(
     commands = [
         {
             'actuator_id': actuator_id,
-            'position': 0.0,
+            'position': start_pos,
         }
     ]
     await kos.actuator.command_actuators(commands)
@@ -154,9 +154,9 @@ async def main():
     joint_names = [
         "dof_right_hip_pitch_04",
         "dof_right_hip_roll_03",
-        "dof_right_hip_yaw_03",
-        "dof_right_knee_04",
-        "dof_right_ankle_02",
+        # "dof_right_hip_yaw_03",
+        # "dof_right_knee_04",
+        # "dof_right_ankle_02",
         # "dof_left_hip_pitch_04",
         # "dof_left_hip_roll_03",
         # "dof_left_hip_yaw_03",
@@ -178,7 +178,7 @@ async def main():
     for joint_name in joint_names:
         TEST_CONFIGS = {
             "joint_name": joint_name,
-            "min_pos": -30.0,
+            "min_pos": -50.0,
             "max_pos": 30.0,
 
             "step_hold_time": 2.0, # seconds
@@ -190,29 +190,36 @@ async def main():
             "sim": args.sim,
         }
 
-        if joint_name == "dof_right_knee_04":
-            TEST_CONFIGS["step_size"] = -10.0
-
-        if joint_name == "dof_left_knee_04":
-            TEST_CONFIGS["step_size"] = 10.0
-
-        if joint_name == "dof_right_elbow_02":
-            TEST_CONFIGS["step_size"] = 10.0
-
-        if joint_name == "dof_left_elbow_02":
-            TEST_CONFIGS["step_size"] = -10.0
-
-        if joint_name == "dof_left_shoulder_roll_03":
-            TEST_CONFIGS["step_size"] = 10.0
-
-        if joint_name == "dof_right_shoulder_roll_03":
-            TEST_CONFIGS["step_size"] = -10.0
-
-        if joint_name == "dof_left_hip_roll_03":
-            TEST_CONFIGS["step_size"] = 10.0
+        #* for on the ground, when doing hip roll, hip pitch is off the ground
+        if joint_name == "dof_right_hip_roll_03":
+            TEST_CONFIGS["start_pos"] = -10.0
         
-        if joint_name == "dof_left_shoulder_roll_03":
-            TEST_CONFIGS["step_size"] = 10.0
+        if joint_name == "dof_right_hip_pitch_04":
+            TEST_CONFIGS["start_pos"] = -20.0
+
+        # if joint_name == "dof_right_knee_04":
+        #     TEST_CONFIGS["step_size"] = -10.0
+
+        # if joint_name == "dof_left_knee_04":
+        #     TEST_CONFIGS["step_size"] = 10.0
+
+        # if joint_name == "dof_right_elbow_02":
+        #     TEST_CONFIGS["step_size"] = 10.0
+
+        # if joint_name == "dof_left_elbow_02":
+        #     TEST_CONFIGS["step_size"] = -10.0
+
+        # if joint_name == "dof_left_shoulder_roll_03":
+        #     TEST_CONFIGS["step_size"] = 10.0
+
+        # if joint_name == "dof_right_shoulder_roll_03":
+        #     TEST_CONFIGS["step_size"] = -10.0
+
+        # if joint_name == "dof_left_hip_roll_03":
+        #     TEST_CONFIGS["step_size"] = 10.0
+        
+        # if joint_name == "dof_left_shoulder_roll_03":
+        #     TEST_CONFIGS["step_size"] = 10.0
     
         
         
@@ -252,6 +259,7 @@ async def main():
         logger.info(f"Kp: {TEST_CONFIGS['kp']}, Kd: {TEST_CONFIGS['kd']}, Max Torque: {TEST_CONFIGS['max_torque']}")
         
         for config_joint_name, config_joint_metadata in metadata["joint_name_to_metadata"].items():
+            print(config_joint_name, config_joint_metadata)
             config_actuator_id = config_joint_metadata["id"]
             config_kp = float(config_joint_metadata["kp"])
             config_kd = float(config_joint_metadata["kd"])
@@ -266,6 +274,16 @@ async def main():
                 max_torque=config_max_torque,
                 torque_enabled=True,
             )
+
+            if config_joint_name in ["dof_right_knee_04", "dof_right_ankle_02", "dof_right_hip_yaw_03", "dof_right_hip_roll_03"]:
+                commands = [
+                    {
+                        'actuator_id': config_actuator_id,
+                        'position': 0.0,
+                    }
+                ]
+                await kos.actuator.command_actuators(commands)
+    
 
 
         asyncio.run(run_step_test(kos, actuator_id, **TEST_CONFIGS))

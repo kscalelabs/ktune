@@ -90,9 +90,9 @@ async def run_chirp_test(
 
     # Return to start position
     commanded_position_ref[0] = start_pos
-    await kos.actuator.command_actuators([{"actuator_id": actuator_id, "position": 0.0}])
+    await kos.actuator.command_actuators([{"actuator_id": actuator_id, "position": start_pos}])
     await asyncio.sleep(1.0)
-    
+
     # Wait for sampling to complete
     await sampler
 
@@ -152,9 +152,10 @@ async def main():
     joint_names = [
         "dof_right_hip_pitch_04",
         "dof_right_hip_roll_03",
-        "dof_right_hip_yaw_03",
-        "dof_right_knee_04",
-        "dof_right_ankle_02",
+        # "dof_right_hip_yaw_03",
+        # "dof_right_knee_04",
+        # "dof_right_ankle_02",
+
         # "dof_left_hip_pitch_04",
         # "dof_left_hip_roll_03",
         # "dof_left_hip_yaw_03",
@@ -179,32 +180,33 @@ async def main():
             "min_pos": -30.0,
             "max_pos": 30.0,
             "chirp_duration": 6.0,
-            "start_pos": 0.0, #-10 for knee
+            "start_pos": -20.0, #-10 for knee
             "step_size": -10.0,
             "start_freq": 0.2,
             "end_freq": 2.0,
             "sim": args.sim,
         }
 
-        if joint_name == "dof_right_knee_04":
-            TEST_CONFIGS["start_pos"] = -10.0
+        # if joint_name == "dof_right_knee_04":
+        #     TEST_CONFIGS["start_pos"] = -10.0
 
-        if joint_name == "dof_left_knee_04":
-            TEST_CONFIGS["start_pos"] = 10.0
+        # if joint_name == "dof_left_knee_04":
+        #     TEST_CONFIGS["start_pos"] = 10.0
 
-        if joint_name == "dof_right_elbow_02":
-            TEST_CONFIGS["start_pos"] = 10.0
+        # if joint_name == "dof_right_elbow_02":
+        #     TEST_CONFIGS["start_pos"] = 10.0
 
-        if joint_name == "dof_left_elbow_02":
-            TEST_CONFIGS["start_pos"] = -10.0
+        # if joint_name == "dof_left_elbow_02":
+        #     TEST_CONFIGS["start_pos"] = -10.0
 
-        if joint_name == "dof_left_shoulder_roll_03":
-            TEST_CONFIGS["start_pos"] = 10.0
+        # if joint_name == "dof_left_shoulder_roll_03":
+        #     TEST_CONFIGS["start_pos"] = 10.0
 
-        if joint_name == "dof_right_shoulder_roll_03":
-            TEST_CONFIGS["start_pos"] = -10.0
+        # if joint_name == "dof_right_shoulder_roll_03":
+        #     TEST_CONFIGS["start_pos"] = -10.0
         
-        
+        if joint_name == "dof_right_hip_roll_03":
+            TEST_CONFIGS["start_pos"] = -10.0        
         
 
         # Read metadata.json to get joint-specific values
@@ -256,6 +258,15 @@ async def main():
                 max_torque=config_max_torque,
                 torque_enabled=True,
             )
+
+            if joint_name in ["dof_right_knee_04", "dof_right_ankle_02", "dof_right_hip_yaw_03", "dof_right_hip_roll_03"]:
+                commands = [
+                    {
+                        'actuator_id': config_actuator_id,
+                        'position': 0.0,
+                    }
+                ]
+                await kos.actuator.command_actuators(commands)
 
       
         # Run the kp/kd sweep
