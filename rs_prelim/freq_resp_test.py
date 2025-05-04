@@ -154,7 +154,7 @@ async def run_test(
         "config": {
             "mode": simorreal,
             "wave_type": wave_type,
-            "time_start": test_start_time,
+            "time_start": collected_at,
             "kp": kp,
             "kd": kd,
             "max_torque": max_torque,
