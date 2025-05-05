@@ -42,13 +42,13 @@ async def run_test(
 
     await kos.actuator.configure_actuator(
         actuator_id=actuator_id,
-        # kp=kp,
-        # kd=kd,
+        kp=kp,
+        kd=kd,
         max_torque=max_torque,
         torque_enabled=True,
     )
 
-    # logger.info(f"Configured actuator {actuator_id} with kp={kp}, kd={kd}, max_torque={max_torque}")
+    logger.info(f"Configured actuator {actuator_id} with kp={kp}, kd={kd}, max_torque={max_torque}")
 
     commands = [
         {
@@ -229,7 +229,7 @@ async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_sta
 async def go_to_zero(kos):
     for id in [31, 32, 33, 34, 35, 41, 42, 43, 44, 45]:
         try:
-            await kos.actuator.configure_actuator(actuator_id=id, torque_enabled=True)
+            await kos.actuator.configure_actuator(actuator_id=id, kp=50.0, kd=5.0, torque_enabled=True)
         except Exception as e:
             print(f"Failed to configure actuator {id}")
     await asyncio.sleep(1)
