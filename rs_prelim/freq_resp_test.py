@@ -273,28 +273,52 @@ async def go_to_stable_stand(kos, sim):
         except Exception as e:
             logger.error(f"Failed to configure actuator {id}: {e}")
 
-    # Update commands with the ZEROS list values
+    #* These are the actuator pos the robot gets to in real. 
     commands = [
-        {'actuator_id': 21, 'position': 0.0, 'velocity': 10.0},        # dof_right_shoulder_pitch_03
-        {'actuator_id': 22, 'position': -10.0, 'velocity': 10.0},      # dof_right_shoulder_roll_03
-        {'actuator_id': 23, 'position': 0.0, 'velocity': 10.0},        # dof_right_shoulder_yaw_02
-        {'actuator_id': 24, 'position': 90.0, 'velocity': 10.0},       # dof_right_elbow_02
+        {'actuator_id': 11, 'position': 0.41, 'velocity': 10.0},        # dof_left_shoulder_pitch_03
+        {'actuator_id': 12, 'position': 10.29, 'velocity': 10.0},       # dof_left_shoulder_roll_03
+        {'actuator_id': 13, 'position': 0.13, 'velocity': 10.0},        # dof_left_shoulder_yaw_02
+        {'actuator_id': 14, 'position': -89.39, 'velocity': 10.0},      # dof_left_elbow_02
+        {'actuator_id': 15, 'position': 0.0, 'velocity': 10.0},        # dof_left_wrist_00
+        {'actuator_id': 21, 'position': 0.93, 'velocity': 10.0},        # dof_right_shoulder_pitch_03
+        {'actuator_id': 22, 'position': -8.71, 'velocity': 10.0},      # dof_right_shoulder_roll_03
+        {'actuator_id': 23, 'position': 0.28, 'velocity': 10.0},        # dof_right_shoulder_yaw_02
+        {'actuator_id': 24, 'position': 89.77, 'velocity': 10.0},       # dof_right_elbow_02
         {'actuator_id': 25, 'position': 0.0, 'velocity': 10.0},        # dof_right_wrist_00
+        {'actuator_id': 31, 'position': 26.93, 'velocity': 10.0},       # dof_left_hip_pitch_04
+        {'actuator_id': 32, 'position': 1.31, 'velocity': 10.0},        # dof_left_hip_roll_03
+        {'actuator_id': 33, 'position': 0.16, 'velocity': 10.0},        # dof_left_hip_yaw_03
+        {'actuator_id': 34, 'position': 56.46, 'velocity': 10.0},       # dof_left_knee_04
+        {'actuator_id': 35, 'position': -30.42, 'velocity': 10.0},      # dof_left_ankle_02
+        {'actuator_id': 41, 'position': -23.94, 'velocity': 10.0},      # dof_right_hip_pitch_04
+        {'actuator_id': 42, 'position': 1.77, 'velocity': 10.0},        # dof_right_hip_roll_03
+        {'actuator_id': 43, 'position': 0.41, 'velocity': 10.0},        # dof_right_hip_yaw_03
+        {'actuator_id': 44, 'position': -55.21, 'velocity': 10.0},      # dof_right_knee_04
+        {'actuator_id': 45, 'position': 32.20, 'velocity': 10.0},       # dof_right_ankle_02
+    ]
+
+    #* These are what the actuator sends in real
+    commands = [
         {'actuator_id': 11, 'position': 0.0, 'velocity': 10.0},        # dof_left_shoulder_pitch_03
         {'actuator_id': 12, 'position': 10.0, 'velocity': 10.0},       # dof_left_shoulder_roll_03
         {'actuator_id': 13, 'position': 0.0, 'velocity': 10.0},        # dof_left_shoulder_yaw_02
         {'actuator_id': 14, 'position': -90.0, 'velocity': 10.0},      # dof_left_elbow_02
         {'actuator_id': 15, 'position': 0.0, 'velocity': 10.0},        # dof_left_wrist_00
-        {'actuator_id': 41, 'position': -25.0, 'velocity': 10.0},      # dof_right_hip_pitch_04
-        {'actuator_id': 42, 'position': 0.0, 'velocity': 10.0},        # dof_right_hip_roll_03
-        {'actuator_id': 43, 'position': 0.0, 'velocity': 10.0},        # dof_right_hip_yaw_03
-        {'actuator_id': 44, 'position': -50.0, 'velocity': 10.0},      # dof_right_knee_04
-        {'actuator_id': 45, 'position': 25.0, 'velocity': 10.0},       # dof_right_ankle_02
+        {'actuator_id': 21, 'position': 0.0, 'velocity': 10.0},        # dof_right_shoulder_pitch_03
+        {'actuator_id': 22, 'position': -10.0, 'velocity': 10.0},      # dof_right_shoulder_roll_03
+        {'actuator_id': 23, 'position': 0.0, 'velocity': 10.0},        # dof_right_shoulder_yaw_02
+        {'actuator_id': 24, 'position': 90.0, 'velocity': 10.0},       # dof_right_elbow_02
+        {'actuator_id': 25, 'position': 0.0, 'velocity': 10.0},        # dof_right_wrist_00
         {'actuator_id': 31, 'position': 25.0, 'velocity': 10.0},       # dof_left_hip_pitch_04
         {'actuator_id': 32, 'position': 0.0, 'velocity': 10.0},        # dof_left_hip_roll_03
         {'actuator_id': 33, 'position': 0.0, 'velocity': 10.0},        # dof_left_hip_yaw_03
         {'actuator_id': 34, 'position': 50.0, 'velocity': 10.0},       # dof_left_knee_04
         {'actuator_id': 35, 'position': -25.0, 'velocity': 10.0},      # dof_left_ankle_02
+        {'actuator_id': 41, 'position': -25.0, 'velocity': 10.0},      # dof_right_hip_pitch_04
+        {'actuator_id': 42, 'position': 0.0, 'velocity': 10.0},        # dof_right_hip_roll_03
+        {'actuator_id': 43, 'position': 0.0, 'velocity': 10.0},        # dof_right_hip_yaw_03
+        {'actuator_id': 44, 'position': -50.0, 'velocity': 10.0},      # dof_right_knee_04
+        {'actuator_id': 45, 'position': 25.0, 'velocity': 10.0},       # dof_right_ankle_02
     ]
 
     if sim:
