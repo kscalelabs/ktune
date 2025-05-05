@@ -219,6 +219,12 @@ async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_sta
         frc_range = passive_params["actuatorfrcrange"].split()
         TEST_CONFIGS["actuatorfrcrange"] = [float(frc_range[0]), float(frc_range[1])]
 
+        #* For from standing
+        state = await kos.actuator.get_actuators_state([actuator_id])
+        TEST_CONFIGS["start_pos"] = float(state.states[0].position)
+
+        print(TEST_CONFIGS["start_pos"], actuator_id)
+
     except Exception as e:
         logger.error(f"Metadata.json defined incorrectly")
         exit(1)
@@ -311,10 +317,12 @@ async def main(wave_type, sim):
     
     joint_names = [
         "dof_right_hip_pitch_04",
-        "dof_right_hip_roll_03",
-        "dof_right_hip_yaw_03",
-        "dof_right_knee_04",
-        "dof_right_ankle_02",
+        # "dof_right_hip_roll_03",
+        # "dof_right_hip_yaw_03",
+        # "dof_right_knee_04",
+        # "dof_right_ankle_02",
+
+
         # "dof_left_hip_pitch_04",
         # "dof_left_hip_roll_03",
         # "dof_left_hip_yaw_03",
@@ -334,35 +342,35 @@ async def main(wave_type, sim):
 
 
     await go_to_stable_stand(kos, sim)
+    await asyncio.sleep(5.0)
 
     for joint_name in joint_names:
         if joint_name == "dof_right_hip_pitch_04":
-            kp_list = [150.0]
-            kd_list = [24.722]
+            kp = 150.0
+            kd = 24.722
             start_pos = -25.0
         elif joint_name == "dof_right_hip_roll_03":
-            kp_list = [200.0]
-            kd_list = [26.387]
+            kp = 200.0
+            kd = 26.387
             start_pos = 0.0
         elif joint_name == "dof_right_hip_yaw_03":
-            kp_list = [100.0]
-            kd_list = [3.419]
+            kp = 100.0
+            kd = 3.419
             start_pos = 0.0
         elif joint_name == "dof_right_knee_04":
-            kp_list = [150.0]
-            kd_list = [8.654]
+            kp = 150.0
+            kd = 8.654
             start_pos = -50.0
         elif joint_name == "dof_right_ankle_02":
-            kp_list = [40.0]
-            kd_list = [0.990]
+            kp = 40.0
+            kd = [0.990]
             start_pos = 25.0
         else:
             raise ValueError(f"Invalid joint name: {joint_name}")
 
-        for kp in kp_list:
-            for kd in kd_list:
-                input(f"Press Enter to run {joint_name} with kp={kp} and kd={kd}")
-                await run_per(wave_type, sim, kos, joint_name, kp, kd, start_pos)
+        # for kp in kp_list:
+        #     for kd in kd_list:
+        await run_per(wave_type, sim, kos, joint_name, kp, kd, start_pos)
       
 
 
