@@ -42,13 +42,13 @@ async def run_test(
 
     await kos.actuator.configure_actuator(
         actuator_id=actuator_id,
-        kp=kp,
-        kd=kd,
+        # kp=kp,
+        # kd=kd,
         max_torque=max_torque,
         torque_enabled=True,
     )
 
-    logger.info(f"Configured actuator {actuator_id} with kp={kp}, kd={kd}, max_torque={max_torque}")
+    # logger.info(f"Configured actuator {actuator_id} with kp={kp}, kd={kd}, max_torque={max_torque}")
 
     commands = [
         {
@@ -229,7 +229,7 @@ async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_sta
 async def go_to_zero(kos):
     for id in [31, 32, 33, 34, 35, 41, 42, 43, 44, 45]:
         try:
-            await kos.actuator.configure_actuator(actuator_id=id, kp=50, kd=5, torque_enabled=True)
+            await kos.actuator.configure_actuator(actuator_id=id, torque_enabled=True)
         except Exception as e:
             print(f"Failed to configure actuator {id}")
     await asyncio.sleep(1)
@@ -267,19 +267,27 @@ async def main(wave_type, sim):
 
     for joint_name in joint_names:
         if joint_name == "dof_right_hip_yaw_03":
-            kp_list = [100.0, 130.0, 200.0, 80.0, 40.0 ]
-            kd_list = [4.0, 8.0, 10.0, 2.0]
+            # kp_list = [100.0, 130.0, 200.0, 80.0, 40.0 ]
+            # kd_list = [4.0, 8.0, 10.0, 2.0]
+            kp_list = [100.0]
+            kd_list = [1.0]
             start_pos = 0.0
         elif joint_name == "dof_right_knee_04":
-            kp_list = [150.0, 200.0, 100.0, 80.0, 40.0]
-            kd_list = [8.0, 12.0, 4.0, 2.0]
+            # kp_list = [150.0, 200.0, 100.0, 80.0, 40.0]
+            # kd_list = [8.0, 12.0, 4.0, 2.0]
+            kp_list = [300.0]
+            kd_list = [1.0]
             start_pos = -10.0
         elif joint_name == "dof_right_ankle_02":
-            kp_list = [40.0, 60.0, 20.0, 10.0]
-            kd_list = [8.0, 6.0, 4.0]
+            # kp_list = [40.0, 60.0, 20.0, 10.0]
+            # kd_list = [8.0, 6.0, 4.0]
+            kp_list = [40.0]
+            kd_list = [1.0]
             start_pos = 0.0
         else:
             raise ValueError(f"Invalid joint name: {joint_name}")
+        
+        await go_to_zero(kos)
 
         for kp in kp_list:
             for kd in kd_list:
