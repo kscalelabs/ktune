@@ -243,8 +243,8 @@ async def main(wave_type, sim):
     await go_to_zero(kos)
     
     joint_names = [
-        # "dof_right_hip_pitch_04",
-        # "dof_right_hip_roll_03",
+        "dof_right_hip_pitch_04",
+        "dof_right_hip_roll_03",
         "dof_right_hip_yaw_03",
         "dof_right_knee_04",
         "dof_right_ankle_02",
@@ -266,23 +266,25 @@ async def main(wave_type, sim):
     ]
 
     for joint_name in joint_names:
-        if joint_name == "dof_right_hip_yaw_03":
-            # kp_list = [100.0, 130.0, 200.0, 80.0, 40.0 ]
-            # kd_list = [4.0, 8.0, 10.0, 2.0]
+        if joint_name == "dof_right_hip_pitch_04":
+            kp_list = [150.0]
+            kd_list = [8.0, 24.722]
+            start_pos = 0.0
+        elif joint_name == "dof_right_hip_roll_03":
+            kp_list = [200.0]
+            kd_list = [8.0, 26.387]
+            start_pos = -10.0
+        elif joint_name == "dof_right_hip_yaw_03":
             kp_list = [100.0]
-            kd_list = [1.0]
+            kd_list = [4.0, 3.419]
             start_pos = 0.0
         elif joint_name == "dof_right_knee_04":
-            # kp_list = [150.0, 200.0, 100.0, 80.0, 40.0]
-            # kd_list = [8.0, 12.0, 4.0, 2.0]
-            kp_list = [300.0]
-            kd_list = [1.0]
+            kp_list = [150.0]
+            kd_list = [8.0, 8.654]
             start_pos = -10.0
         elif joint_name == "dof_right_ankle_02":
-            # kp_list = [40.0, 60.0, 20.0, 10.0]
-            # kd_list = [8.0, 6.0, 4.0]
             kp_list = [40.0]
-            kd_list = [1.0]
+            kd_list = [8.0, 0.990]
             start_pos = 0.0
         else:
             raise ValueError(f"Invalid joint name: {joint_name}")
