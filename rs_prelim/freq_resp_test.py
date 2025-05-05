@@ -316,11 +316,11 @@ async def main(wave_type, sim):
     kos = pykos.KOS("0.0.0.0")
     
     joint_names = [
-        "dof_right_hip_pitch_04",
+        # "dof_right_hip_pitch_04",
         # "dof_right_hip_roll_03",
         # "dof_right_hip_yaw_03",
         # "dof_right_knee_04",
-        # "dof_right_ankle_02",
+        "dof_right_ankle_02",
 
 
         # "dof_left_hip_pitch_04",
@@ -363,7 +363,7 @@ async def main(wave_type, sim):
             start_pos = -50.0
         elif joint_name == "dof_right_ankle_02":
             kp = 40.0
-            kd = [0.990]
+            kd = 0.990
             start_pos = 25.0
         else:
             raise ValueError(f"Invalid joint name: {joint_name}")
