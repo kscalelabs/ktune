@@ -179,7 +179,7 @@ async def run_test(
     logger.info(f"Data saved to {filename}")
 
 
-async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_start_pos):
+async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_start_pos, input_step_size=-10.0):
     TEST_CONFIGS = {
         "joint_name": joint_name,
         "simorreal": "sim" if sim else "real",
@@ -189,7 +189,7 @@ async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_sta
         "step_count": 100,  # 1000
         "start_pos": input_start_pos,  # degrees
 
-        "step_size": -10.0,       # degrees
+        "step_size": input_step_size,       # degrees
 
         "start_freq": 0.2,
         "end_freq": 2.0,
@@ -303,9 +303,10 @@ async def go_to_stable_stand(kos, sim):
         {'actuator_id': 45, 'position': 25.0, 'velocity': 10.0},       # dof_right_ankle_02
     ]
 
+
     if sim:
         print("Resetting sim")
-        await kos.sim.reset(pos={"x": 0.0, "y": 0.0, "z": 1.01}, quat={"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0})
+        await kos.sim.reset(pos={"x": 0.0, "y": 0.0, "z": 1.05}, quat={"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0})
 
     await kos.actuator.command_actuators(commands)
 
@@ -316,11 +317,11 @@ async def main(wave_type, sim):
     kos = pykos.KOS("0.0.0.0")
     
     joint_names = [
-        # "dof_right_hip_pitch_04",
+        "dof_right_hip_pitch_04",
         # "dof_right_hip_roll_03",
         # "dof_right_hip_yaw_03",
         # "dof_right_knee_04",
-        "dof_right_ankle_02",
+        # "dof_right_ankle_02",
 
 
         # "dof_left_hip_pitch_04",
@@ -348,7 +349,8 @@ async def main(wave_type, sim):
         if joint_name == "dof_right_hip_pitch_04":
             kp = 150.0
             kd = 24.722
-            start_pos = -25.0
+            start_pos = 0.0
+            step_size = 10.0
         elif joint_name == "dof_right_hip_roll_03":
             kp = 200.0
             kd = 26.387
@@ -360,18 +362,17 @@ async def main(wave_type, sim):
         elif joint_name == "dof_right_knee_04":
             kp = 150.0
             kd = 8.654
-            start_pos = -50.0
+            start_pos = -80.0
         elif joint_name == "dof_right_ankle_02":
             kp = 40.0
             kd = 0.990
-            start_pos = 25.0
+            start_pos = -20.0
         else:
             raise ValueError(f"Invalid joint name: {joint_name}")
 
         # for kp in kp_list:
         #     for kd in kd_list:
-        await run_per(wave_type, sim, kos, joint_name, kp, kd, start_pos)
-      
+        # await run_per(wave_type, sim, kos, joint_name, kp, kd, start_pos, step_size)
 
 
 if __name__ == "__main__":

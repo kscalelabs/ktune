@@ -124,7 +124,7 @@ def plot_kp_kd_matrix(actuator_files, actuator_id, data_type, output_file):
 def main():
     today = datetime.now().strftime("%Y%m%d")
     p = argparse.ArgumentParser(description="KP/KD matrix plots")
-    p.add_argument("--date", default="20250503", help="YYYYMMDD")
+    p.add_argument("--date", default="20250505", help="YYYYMMDD")
     p.add_argument("--type", default="chirp", choices=["chirp","step"])
     args = p.parse_args()
 
