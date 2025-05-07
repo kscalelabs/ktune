@@ -35,8 +35,6 @@ async def run_test(
     start_freq, end_freq, chirp_duration,
     step_count, start_pos,
     armature, frictionloss, actuatorfrcrange, damping):
-
-    kos = pykos.KOS("0.0.0.0")
     
     DATA = []
 
@@ -179,7 +177,7 @@ async def run_test(
     logger.info(f"Data saved to {filename}")
 
 
-async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_start_pos, input_step_size=-10.0):
+async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_start_pos=0.0):
     TEST_CONFIGS = {
         "joint_name": joint_name,
         "simorreal": "sim" if sim else "real",
@@ -189,7 +187,7 @@ async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_sta
         "step_count": 100,  # 1000
         "start_pos": input_start_pos,  # degrees
 
-        "step_size": input_step_size,       # degrees
+        "step_size": -10.0,       # degrees
 
         "start_freq": 0.2,
         "end_freq": 2.0,
@@ -220,10 +218,8 @@ async def run_per(wave_type, sim, kos, joint_name, input_kp, input_kd, input_sta
         TEST_CONFIGS["actuatorfrcrange"] = [float(frc_range[0]), float(frc_range[1])]
 
         #* For from standing
-        state = await kos.actuator.get_actuators_state([actuator_id])
-        TEST_CONFIGS["start_pos"] = float(state.states[0].position)
-
-        print(TEST_CONFIGS["start_pos"], actuator_id)
+        # state = await kos.actuator.get_actuators_state([actuator_id])
+        # TEST_CONFIGS["start_pos"] = float(state.states[0].position)
 
     except Exception as e:
         logger.error(f"Metadata.json defined incorrectly")
@@ -240,14 +236,18 @@ async def go_to_zero(kos, sim):
             print(f"Failed to configure actuator {id}")
     await asyncio.sleep(1)
 
-    commands = [{'actuator_id': id, 'position': 0.0, 'velocity': 10.0} for id in [31, 32, 33, 34, 35, 41, 42, 43, 44, 45]]
-    await kos.actuator.command_actuators(commands)
+    commands = [{'actuator_id': id, 'position': 0.0} for id in [31, 32, 33, 34, 35, 41, 42, 43, 44, 45]]
 
     if sim:
         await kos.sim.reset(
             pos={"x": 0.0, "y": 0.0, "z": 1.01},
             quat={"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0},
         )
+
+    await kos.actuator.command_actuators(commands)
+
+    await asyncio.sleep(1)
+
 
 async def go_to_stable_stand(kos, sim):
     # Load metadata to get kp and kd values
@@ -342,37 +342,31 @@ async def main(wave_type, sim):
     ]
 
 
-    await go_to_stable_stand(kos, sim)
-    await asyncio.sleep(5.0)
+    await go_to_zero(kos, sim)
 
     for joint_name in joint_names:
         if joint_name == "dof_right_hip_pitch_04":
             kp = 150.0
             kd = 24.722
-            start_pos = 0.0
-            step_size = 10.0
         elif joint_name == "dof_right_hip_roll_03":
             kp = 200.0
             kd = 26.387
-            start_pos = 0.0
         elif joint_name == "dof_right_hip_yaw_03":
             kp = 100.0
             kd = 3.419
-            start_pos = 0.0
         elif joint_name == "dof_right_knee_04":
             kp = 150.0
             kd = 8.654
-            start_pos = -80.0
         elif joint_name == "dof_right_ankle_02":
             kp = 40.0
             kd = 0.990
-            start_pos = -20.0
         else:
             raise ValueError(f"Invalid joint name: {joint_name}")
 
         # for kp in kp_list:
         #     for kd in kd_list:
-        # await run_per(wave_type, sim, kos, joint_name, kp, kd, start_pos, step_size)
+        await run_per(wave_type, sim, kos, joint_name, kp, kd)
+      
 
 
 if __name__ == "__main__":

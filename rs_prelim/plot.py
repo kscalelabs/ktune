@@ -104,10 +104,12 @@ def plot_kp_kd_matrix(actuator_files, actuator_id, data_type, output_file):
                         f"Fric={m.get('frictionloss','N/A')}, "
                         f"Damp={m.get('damping','N/A')}"
                     )
-                    ax.annotate(sim_params, xy=(0.5,-0.18), xycoords='axes fraction',
+                    ax.annotate(sim_params, xy=(0.5,-0.28), xycoords='axes fraction',
                                 fontsize=7, ha='center', va='bottom')
 
+            ax.axhline(y=-9, color='r', linestyle='--', alpha=0.5, label='-9°')
             ax.grid(True, alpha=0.3)
+            ax.set_ylim(bottom=-11)  # Set y-axis limit to -11
 
     # legend, labels, title, spacing
     axes[0,0].legend(loc="upper left", fontsize=8)
@@ -124,7 +126,7 @@ def plot_kp_kd_matrix(actuator_files, actuator_id, data_type, output_file):
 def main():
     today = datetime.now().strftime("%Y%m%d")
     p = argparse.ArgumentParser(description="KP/KD matrix plots")
-    p.add_argument("--date", default="20250505", help="YYYYMMDD")
+    p.add_argument("--date", default="20250506", help="YYYYMMDD")
     p.add_argument("--type", default="chirp", choices=["chirp","step"])
     args = p.parse_args()
 
