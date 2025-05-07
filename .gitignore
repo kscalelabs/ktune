@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.DS_Store
 
 # C extensions
 *.so
@@ -67,6 +68,7 @@ instance/
 
 # Scrapy stuff:
 .scrapy
+*/DATA/*
 
 # Sphinx documentation
 docs/_build/
@@ -170,3 +172,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 *.png
+
+.kos-sim
