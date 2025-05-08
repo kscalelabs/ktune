@@ -194,8 +194,8 @@ async def run_test(
         "actuator_id": 1,
         "input_type": input_type,
         "sim": sim,
-        "amplitude": -30.0,
-        "duration": 6.0,
+        "amplitude": amplitude,
+        "duration": duration,
         "title": title,
     }
     if not servo_only:
@@ -216,6 +216,9 @@ async def main(input_type: str, sim: bool, DATA: List[float], title: str, servo_
     if sim:
         kos = KOS("100.101.101.48")
         imu_kos = kos
+
+        #! Temp fix, MJCF motor orientation is wrong
+        CONFIG["amplitude"] = -1*CONFIG["amplitude"]
     else:
         kos = KOS("0.0.0.0", "3001")
         if servo_only:
