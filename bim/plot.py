@@ -107,16 +107,16 @@ def plot_projected_gravity(json_file):
 
     # Calculate expected gravity based on actuator position
     expected_X = -1 * np.cos(np.radians(act_pos_np))
-    # expected_Y = -1 * np.sin(np.radians(act_pos_np))
-    expected_Z = -1 * np.sin(np.radians(act_pos_np))
+    expected_Y = np.sin(np.radians(act_pos_np))
+    # expected_Z = -1 * np.sin(np.radians(act_pos_np))
 
     # Calculate differences
     diff_x = np.abs(proj_x_np - expected_X)
-    # diff_y = np.abs(proj_y_np - expected_Y)
-    diff_z = np.abs(proj_z_np - expected_Z)
+    diff_y = np.abs(proj_y_np - expected_Y)
+    # diff_z = np.abs(proj_z_np - expected_Z)
 
     # Combine X and Z differences
-    all_diffs = np.concatenate([diff_x, diff_z])
+    all_diffs = np.concatenate([diff_x, diff_y])
 
     # Calculate metrics
     avg_diff = np.mean(all_diffs)
@@ -147,15 +147,15 @@ def plot_projected_gravity(json_file):
         color=colors[0],
         linewidth=3,
     )
-    # ax2.plot(times_np, expected_Y, label='Expected Y', linestyle='--', color=colors[1], linewidth=3)
-    ax2.plot(
-        times_np,
-        expected_Z,
-        label="Expected Z",
-        linestyle="--",
-        color=colors[2],
-        linewidth=3,
-    )
+    ax2.plot(times_np, expected_Y, label='Expected Y', linestyle='--', color=colors[1], linewidth=3)
+    # ax2.plot(
+    #     times_np,
+    #     expected_Z,
+    #     label="Expected Z",
+    #     linestyle="--",
+    #     color=colors[2],
+    #     linewidth=3,
+    # )
     ax2.plot(times_np, proj_x_np, label="Projected X", color=colors[0], linewidth=2)
     ax2.plot(times_np, proj_y_np, label="Projected Y", color=colors[1], linewidth=2)
     ax2.plot(times_np, proj_z_np, label="Projected Z", color=colors[2], linewidth=2)
@@ -183,6 +183,71 @@ def plot_projected_gravity(json_file):
     plt.savefig(f"{json_file.split('.')[0]}/proj_gravity.png")
 
 
+def add_noise_np(
+    observation: np.ndarray,
+    rng: np.random.Generator,
+    noise_type: str,
+    noise_level: float,
+    curriculum_level: float,
+) -> np.ndarray:
+    """Add Gaussian or uniform noise to a NumPy array."""
+    if noise_type == "gaussian":
+        # standard_normal produces samples ~ N(0,1)
+        noise = rng.standard_normal(observation.shape)
+    elif noise_type == "uniform":
+        # random() in [0,1), so 2*rng.random-1 gives uniform in [-1,1)
+        noise = (rng.random(observation.shape) * 2) - 1
+    else:
+        raise ValueError(f"Invalid noise type: {noise_type!r}")
+    return observation + noise * noise_level * curriculum_level
+
+
+def plot_accel_xyz_with_numpy_noise(
+    json_file: str,
+    noise_level: float = 0.5,
+    noise_type: str = "gaussian",
+    curriculum_level: float = 1.0,
+    seed: int = 0,
+):
+    # --- LOAD YOUR COLLECTED DATA ---
+    with open(json_file, "r") as f:
+        payload = json.load(f)
+    data = payload["data"]
+    times = np.array([d["time"] for d in data])
+    times -= times[0]  # make t[0] == 0
+
+    # stack accel into an (N,3) array
+    accel = np.vstack([
+        [d["accel_xyz"][i] for d in data]
+        for i in range(3)
+    ]).T  # shape = (N, 3)
+
+    # --- ADD NOISE WITH NUMPY ---
+    rng = np.random.default_rng(seed)
+    noisy_accel = add_noise_np(accel, rng, noise_type, noise_level, curriculum_level)
+
+    # --- PLOT ---
+    ax_vals, ay_vals, az_vals = noisy_accel.T
+
+    out_dir = json_file.rsplit(".", 1)[0]
+    os.makedirs(out_dir, exist_ok=True)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(times, ax_vals, label="Accel X (noisy)", alpha=0.8, color="r")
+    plt.plot(times, ay_vals, label="Accel Y (noisy)", alpha=0.8, color="g")
+    plt.plot(times, az_vals, label="Accel Z (noisy)", alpha=0.8, color="b")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Acceleration (m/s²)")
+    plt.title(f"Noisy Accelerometer Data\n{payload.get('config',{})}")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+
+    out_path = os.path.join(out_dir, "accel_xyz_noisy.png")
+    plt.savefig(out_path)
+    print(f"Saved noisy plot to {out_path}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("json_path", help="path to your data.json")
@@ -191,4 +256,5 @@ if __name__ == "__main__":
     logger.info(f"Plotting {json_file}")
     plot_accel_xyz(json_file)
     plot_projected_gravity(json_file)
+    plot_accel_xyz_with_numpy_noise(json_file)
     logger.info(f"Saved {json_file.split('.')[0]}/___.png")

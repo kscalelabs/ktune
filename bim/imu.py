@@ -146,7 +146,7 @@ async def run_test(
         await asyncio.sleep(1.0)
 
     elif input_type == "chirp":
-        end_freq = 2.0
+        end_freq = 1.5
         start_freq = 0.2
 
         k = (end_freq - start_freq) / duration  # Rate of frequency change
@@ -180,6 +180,8 @@ async def run_test(
             ]
 
             await kos.actuator.command_actuators(commands)
+    elif input_type == "static":
+        pass
     else:
         raise ValueError(f"Invalid input type: {input_type}")
 
@@ -226,7 +228,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--sim", action="store_true")
     parser.add_argument(
-        "--input_type", type=str, choices=["step", "chirp"], default="step"
+        "--input_type", type=str, choices=["step", "chirp", "static"], default="step"
     )
     parser.add_argument(
         "--title", type=str, default=datetime.now().strftime("%Y%m%d_%H%M%S")
