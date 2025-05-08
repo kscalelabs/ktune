@@ -88,6 +88,7 @@ MUJOCO_LOG.TXT
 # Data
 *.png
 *.pkl
+*/DATA/*
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
