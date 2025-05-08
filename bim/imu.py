@@ -85,6 +85,7 @@ async def run_test(
     sim: bool,
     amplitude: float,
     duration: float,
+    servo_only: bool,
 ):
     test_start_time = time.monotonic()
 
@@ -117,9 +118,10 @@ async def run_test(
 
     logger.info("Actuator configured")
 
-    sampler = asyncio.create_task(
-        sample_loop(kos, imu_kos, DATA, duration, actuator_id)
-    )
+    if not servo_only:
+        sampler = asyncio.create_task(
+            sample_loop(kos, imu_kos, DATA, duration, actuator_id)
+        )
 
     if input_type == "step":
 
@@ -185,7 +187,8 @@ async def run_test(
     else:
         raise ValueError(f"Invalid input type: {input_type}")
 
-    await sampler
+    if not servo_only:
+        await sampler
 
     CONFIG = {
         "actuator_id": 1,
@@ -195,16 +198,17 @@ async def run_test(
         "duration": 6.0,
         "title": title,
     }
-    save_data(DATA, **CONFIG)
+    if not servo_only:
+        save_data(DATA, **CONFIG)
 
 
-async def main(input_type: str, sim: bool, DATA: List[float], title: str):
+async def main(input_type: str, sim: bool, DATA: List[float], title: str, servo_only: bool):
 
     CONFIG = {
         "actuator_id": 1,
         "input_type": input_type,
         "sim": sim,
-        "amplitude": -30.0,
+        "amplitude": 30.0,
         "duration": 6.0,
         "title": title,
     }
@@ -214,14 +218,18 @@ async def main(input_type: str, sim: bool, DATA: List[float], title: str):
         imu_kos = kos
     else:
         kos = KOS("0.0.0.0", "3001")
-        imu_kos = KOS("0.0.0.0")
+        if servo_only:
+            imu_kos = KOS("0.0.0.0", "3001") #*Won't be used
+        else:
+            imu_kos = KOS("0.0.0.0")
         CONFIG["actuator_id"] = 14
 
     try:
-        await run_test(kos, imu_kos, DATA, **CONFIG)
+        await run_test(kos, imu_kos, DATA, **CONFIG, servo_only=servo_only)
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt")
-        save_data(DATA, **CONFIG)
+        if not servo_only:
+            save_data(DATA, **CONFIG)
 
 
 if __name__ == "__main__":
@@ -233,7 +241,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--title", type=str, default=datetime.now().strftime("%Y%m%d_%H%M%S")
     )
+    parser.add_argument(
+        "--servo_only", action="store_true"
+    )
     args = parser.parse_args()
 
     DATA: List[float] = []
-    asyncio.run(main(args.input_type, args.sim, DATA, args.title))
+    asyncio.run(main(args.input_type, args.sim, DATA, args.title, args.servo_only))
