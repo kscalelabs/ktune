@@ -9,6 +9,7 @@ import glob
 import matplotlib.pyplot as plt
 import numpy as np
 import xax
+from scipy.signal import medfilt
 
 # Local imports
 import colorlogging
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 colorlogging.configure()
 
 
-def plot_accel_xyz(json_file):
+def plot_accel_xyz(json_file, imu_loc):
     # Load the JSON
     with open(json_file, "r") as f:
         payload = json.load(f)
@@ -30,36 +31,109 @@ def plot_accel_xyz(json_file):
     input_type = config.get("input_type", "unknown")
     collected_on = config.get("collected_on", "unknown")
     mode = config.get("mode", "unknown")
+    data_entries = payload["data"]
+
+    times = [entry["time"] for entry in data_entries]
+    t0 = times[0]
+    times = [t - t0 for t in times]
+
+    accel_x = []
+    accel_y = []
+    accel_z = []
+    act_pos = []
+    for entry in data_entries:
+        accel_x.append(entry["accel_xyz"][0])
+        accel_y.append(entry["accel_xyz"][1])
+        accel_z.append(entry["accel_xyz"][2])
+        act_pos.append(entry["position"])
+
+    # Convert lists to numpy arrays for calculations
+    times_np = np.array(times)
+    accel_x_np = np.array(accel_x)
+    accel_y_np = np.array(accel_y)
+    accel_z_np = np.array(accel_z)
+    act_pos_np = np.array(act_pos)
 
     # Create title with config info
     config_title = f"[{mode}] {input_type} ({collected_on})"
 
-    # Extract timestamp and accel data
-    data = payload["data"]
-    times = [entry["time"] for entry in data]
-    # Convert to relative time (seconds since start)
-    t0 = times[0]
-    times = [t - t0 for t in times]
+    expected_X = -10 * np.cos(np.radians(act_pos_np))
 
-    ax = [entry["accel_xyz"][0] for entry in data]
-    ay = [entry["accel_xyz"][1] for entry in data]
-    az = [entry["accel_xyz"][2] for entry in data]
+    if imu_loc == "front":
+        expected_Z = np.zeros_like(act_pos_np)
+        expected_Y = -10 * np.sin(np.radians(act_pos_np))
+    elif imu_loc == "right":
+        expected_Y = np.zeros_like(act_pos_np)
+        expected_Z = 10 * np.sin(np.radians(act_pos_np))
+    else:
+        raise ValueError(f"Invalid IMU location: {imu_loc}")
+
 
     # Plot
     plt.figure(figsize=(10, 6))
-    plt.plot(times, ax, label="Accel X", color="r")
-    plt.plot(times, ay, label="Accel Y", color="g")
-    plt.plot(times, az, label="Accel Z", color="b")
+    plt.plot(times_np, accel_x_np, label="Accel X", color="r",linestyle="-.")
+    plt.plot(times_np, accel_y_np, label="Accel Y", color="g",linestyle="-.")
+    plt.plot(times_np, accel_z_np, label="Accel Z", color="b",linestyle="-.")
+    plt.plot(times_np, expected_X, label="Expected X", color="r",linestyle="dashed", linewidth=1)
+    plt.plot(times_np, expected_Y, label="Expected Y", color="g",linestyle="dashed", linewidth=1)
+    plt.plot(times_np, expected_Z, label="Expected Z", color="b",linestyle="dashed", linewidth=1)
+    
+    # Calculate trends using scipy.signal.medfilt (median filter)
+    # Use median filter to create step-like trends (window size can be adjusted)
+    window_size = max(3, len(times_np) // 15)  # Make window size odd
+    if window_size % 2 == 0:
+        window_size += 1
+    
+    x_trend = medfilt(accel_x_np, window_size)
+    y_trend = medfilt(accel_y_np, window_size) 
+    z_trend = medfilt(accel_z_np, window_size)
+    
+    # Plot the trend lines
+    plt.plot(times_np, x_trend, label="X Trend", color="k", linestyle="-", linewidth=2)
+    plt.plot(times_np, y_trend, label="Y Trend", color="k", linestyle="-", linewidth=2)
+    plt.plot(times_np, z_trend, label="Z Trend", color="k", linestyle="-", linewidth=2)
+    
+    # Calculate MSE (from expected theoretical values)
+    mse_x = np.mean((accel_x_np - expected_X) ** 2)
+    mse_y = np.mean((accel_y_np - expected_Y) ** 2)
+    mse_z = np.mean((accel_z_np - expected_Z) ** 2)
+    mse_all = np.mean([mse_x, mse_y, mse_z])
+    
+    # Calculate standard deviation from trend lines (instead of variance)
+    std_x = np.std(accel_x_np - x_trend)
+    std_y = np.std(accel_y_np - y_trend)
+    std_z = np.std(accel_z_np - z_trend)
+    std_all = np.mean([std_x, std_y, std_z])
+    
+    # Add text box with metrics
+    textstr = (f"MSE from expected values:\n"
+               f"X: {mse_x:.2f}, Y: {mse_y:.2f}, Z: {mse_z:.2f}\n"
+               f"Avg: {mse_all:.2f}\n\n"
+               f"Standard deviation from \n trend (median filter):\n"
+               f"X: {std_x:.2f}, Y: {std_y:.2f}, Z: {std_z:.2f}\n"
+               f"Avg: {std_all:.2f}")
+    
+    props = dict(boxstyle="round", facecolor="white", alpha=0.7)
+    plt.text(
+        0.02,
+        0.15,
+        textstr,
+        transform=plt.gca().transAxes,
+        fontsize=10,
+        verticalalignment="bottom",
+        bbox=props,
+    )
+    
     plt.xlabel("Time (s) since start")
     plt.ylabel("Acceleration (m/s²)")
     plt.title(f"Accelerometer X, Y, Z over Time - {config_title}")
-    plt.legend()
+    plt.legend(loc="upper left")
     plt.grid(True)
     plt.tight_layout()
     plt.savefig(f"{json_file.split('.')[0]}/accel_xyz.png")
 
 
-def plot_projected_gravity(json_file):
+def plot_projected_gravity(json_file, imu_loc):
     # Load the JSON
     with open(json_file, "r") as f:
         payload = json.load(f)
@@ -107,16 +181,23 @@ def plot_projected_gravity(json_file):
 
     # Calculate expected gravity based on actuator position
     expected_X = -1 * np.cos(np.radians(act_pos_np))
-    expected_Y = np.sin(np.radians(act_pos_np))
-    # expected_Z = -1 * np.sin(np.radians(act_pos_np))
+
+    if imu_loc == "front":
+        expected_Z = np.zeros_like(act_pos_np)
+        expected_Y = -1 * np.sin(np.radians(act_pos_np))
+    elif imu_loc == "right":
+        expected_Y = np.zeros_like(act_pos_np)
+        expected_Z = np.sin(np.radians(act_pos_np))
+    else:
+        raise ValueError(f"Invalid IMU location: {imu_loc}")
 
     # Calculate differences
     diff_x = np.abs(proj_x_np - expected_X)
     diff_y = np.abs(proj_y_np - expected_Y)
-    # diff_z = np.abs(proj_z_np - expected_Z)
+    diff_z = np.abs(proj_z_np - expected_Z)
 
     # Combine X and Z differences
-    all_diffs = np.concatenate([diff_x, diff_y])
+    all_diffs = np.concatenate([diff_x, diff_y, diff_z])
 
     # Calculate metrics
     avg_diff = np.mean(all_diffs)
@@ -147,15 +228,22 @@ def plot_projected_gravity(json_file):
         color=colors[0],
         linewidth=3,
     )
-    ax2.plot(times_np, expected_Y, label='Expected Y', linestyle='--', color=colors[1], linewidth=3)
-    # ax2.plot(
-    #     times_np,
-    #     expected_Z,
-    #     label="Expected Z",
-    #     linestyle="--",
-    #     color=colors[2],
-    #     linewidth=3,
-    # )
+    ax2.plot(
+        times_np,
+        expected_Y,
+        label="Expected Y",
+        linestyle="--",
+        color=colors[1],
+        linewidth=3,
+    )
+    ax2.plot(
+        times_np,
+        expected_Z,
+        label="Expected Z",
+        linestyle="--",
+        color=colors[2],
+        linewidth=3,
+    )
     ax2.plot(times_np, proj_x_np, label="Projected X", color=colors[0], linewidth=2)
     ax2.plot(times_np, proj_y_np, label="Projected Y", color=colors[1], linewidth=2)
     ax2.plot(times_np, proj_z_np, label="Projected Z", color=colors[2], linewidth=2)
@@ -208,10 +296,18 @@ def plot_accel_xyz_with_numpy_noise(
     noise_type: str = "gaussian",
     curriculum_level: float = 1.0,
     seed: int = 0,
+    imu_loc: str = "front",
 ):
     # --- LOAD YOUR COLLECTED DATA ---
     with open(json_file, "r") as f:
         payload = json.load(f)
+
+    config = payload.get("config", {})
+    mode = config.get("mode", "unknown")
+
+    if mode == "real":
+        return
+
     data = payload["data"]
     times = np.array([d["time"] for d in data])
     times -= times[0]  # make t[0] == 0
@@ -251,10 +347,11 @@ def plot_accel_xyz_with_numpy_noise(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("json_path", help="path to your data.json")
+    parser.add_argument("--imu_loc", choices=["front", "right"], default="front", help="location of the IMU")
     args = parser.parse_args()
     json_file = args.json_path
     logger.info(f"Plotting {json_file}")
-    plot_accel_xyz(json_file)
-    plot_projected_gravity(json_file)
-    plot_accel_xyz_with_numpy_noise(json_file)
+    plot_accel_xyz(json_file, args.imu_loc)
+    plot_projected_gravity(json_file, args.imu_loc)
+    plot_accel_xyz_with_numpy_noise(json_file, args.imu_loc)
     logger.info(f"Saved {json_file.split('.')[0]}/___.png")
