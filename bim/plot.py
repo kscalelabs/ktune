@@ -68,15 +68,16 @@ def plot_accel_xyz(json_file, imu_loc):
     else:
         raise ValueError(f"Invalid IMU location: {imu_loc}")
 
+    # Create figure with subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12))
 
-    # Plot
-    plt.figure(figsize=(10, 6))
-    plt.plot(times_np, accel_x_np, label="Accel X", color="r",linestyle="-.")
-    plt.plot(times_np, accel_y_np, label="Accel Y", color="g",linestyle="-.")
-    plt.plot(times_np, accel_z_np, label="Accel Z", color="b",linestyle="-.")
-    plt.plot(times_np, expected_X, label="Expected X", color="r",linestyle="dashed", linewidth=1)
-    plt.plot(times_np, expected_Y, label="Expected Y", color="g",linestyle="dashed", linewidth=1)
-    plt.plot(times_np, expected_Z, label="Expected Z", color="b",linestyle="dashed", linewidth=1)
+    # First subplot with all data and trend lines
+    ax1.plot(times_np, accel_x_np, label="Accel X", color="r", linestyle="-.")
+    ax1.plot(times_np, accel_y_np, label="Accel Y", color="g", linestyle="-.")
+    ax1.plot(times_np, accel_z_np, label="Accel Z", color="b", linestyle="-.")
+    ax1.plot(times_np, expected_X, label="Expected X", color="r", linestyle="dashed", linewidth=1)
+    ax1.plot(times_np, expected_Y, label="Expected Y", color="g", linestyle="dashed", linewidth=1)
+    ax1.plot(times_np, expected_Z, label="Expected Z", color="b", linestyle="dashed", linewidth=1)
     
     # Calculate trends using scipy.signal.medfilt (median filter)
     # Use median filter to create step-like trends (window size can be adjusted)
@@ -89,9 +90,9 @@ def plot_accel_xyz(json_file, imu_loc):
     z_trend = medfilt(accel_z_np, window_size)
     
     # Plot the trend lines
-    plt.plot(times_np, x_trend, label="X Trend", color="k", linestyle="-", linewidth=2)
-    plt.plot(times_np, y_trend, label="Y Trend", color="k", linestyle="-", linewidth=2)
-    plt.plot(times_np, z_trend, label="Z Trend", color="k", linestyle="-", linewidth=2)
+    ax1.plot(times_np, x_trend, label="X Trend", color="k", linestyle="-", linewidth=2)
+    ax1.plot(times_np, y_trend, label="Y Trend", color="k", linestyle="-", linewidth=2)
+    ax1.plot(times_np, z_trend, label="Z Trend", color="k", linestyle="-", linewidth=2)
     
     # Calculate MSE (from expected theoretical values)
     mse_x = np.mean((accel_x_np - expected_X) ** 2)
@@ -114,21 +115,46 @@ def plot_accel_xyz(json_file, imu_loc):
                f"Avg: {std_all:.2f}")
     
     props = dict(boxstyle="round", facecolor="white", alpha=0.7)
-    plt.text(
+    ax1.text(
         0.02,
         0.15,
         textstr,
-        transform=plt.gca().transAxes,
+        transform=ax1.transAxes,
         fontsize=10,
         verticalalignment="bottom",
         bbox=props,
     )
     
-    plt.xlabel("Time (s) since start")
-    plt.ylabel("Acceleration (m/s²)")
-    plt.title(f"Accelerometer X, Y, Z over Time - {config_title}")
-    plt.legend(loc="upper left")
-    plt.grid(True)
+    ax1.set_xlabel("Time (s) since start")
+    ax1.set_ylabel("Acceleration (m/s²)")
+    ax1.set_title(f"Accelerometer X, Y, Z with Expected Values - {config_title}")
+    ax1.legend(loc="upper left")
+    ax1.grid(True)
+
+    # Second subplot with just accelerometer data
+    ax2.plot(times_np, accel_x_np, label="Accel X", color="r", linestyle="dotted")
+    ax2.plot(times_np, accel_y_np, label="Accel Y", color="g", linestyle="dotted")
+    ax2.plot(times_np, accel_z_np, label="Accel Z", color="b", linestyle="dotted")
+    
+    # Add text box showing number of data points
+    data_points_text = f"Number of data points: {len(accel_y_np)}"
+    data_props = dict(boxstyle="round", facecolor="white", alpha=0.7)
+    ax2.text(
+        0.01,
+        0.4,
+        data_points_text,
+        transform=ax2.transAxes,
+        fontsize=10,
+        verticalalignment="bottom",
+        bbox=data_props,
+    )
+    
+    ax2.set_xlabel("Time (s) since start")
+    ax2.set_ylabel("Acceleration (m/s²)")
+    ax2.set_title(f"Accelerometer X, Y, Z Data - {config_title}")
+    ax2.legend(loc="upper left")
+    ax2.grid(True)
+    
     plt.tight_layout()
     plt.savefig(f"{json_file.split('.')[0]}/accel_xyz.png")
 
