@@ -87,6 +87,7 @@ MUJOCO_LOG.TXT
 
 # Data
 *.png
+!*/readme_pics/*.png
 *.pkl
 */DATA/*
 
