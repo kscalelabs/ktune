@@ -31,6 +31,7 @@ def plot_accel_xyz(json_file, imu_loc):
     input_type = config.get("input_type", "")
     collected_on = config.get("collected_on", "")
     mode = config.get("mode", "")
+    title = config.get("title", "")
     data_entries = payload["data"]
 
     times = [entry["time"] for entry in data_entries]
@@ -55,7 +56,7 @@ def plot_accel_xyz(json_file, imu_loc):
     act_pos_np = np.array(act_pos)
 
     # Create title with config info
-    config_title = f"[{mode}] {input_type} ({collected_on})"
+    config_title = f"[{mode}] {input_type} ({collected_on}) {title}"
 
     expected_X = -10 * np.cos(np.radians(act_pos_np))
 
@@ -178,10 +179,11 @@ def plot_projected_gravity(json_file, imu_loc):
     actuator_id = config.get("actuator_id", "")
     amplitude = config.get("amplitude", "")
     duration = config.get("duration", "")
+    title = config.get("title", "")
 
     # Create title with config info
     config_title = (
-        f"{mode} - {input_type} of {amplitude} for {duration} seconds ({collected_on})"
+        f"{mode} - {input_type} of {amplitude} for {duration} seconds ({collected_on}) {title}"
     )
 
     data_entries = payload["data"]
@@ -443,7 +445,7 @@ def plot_accel_xyz_with_numpy_noise(
     
     ax1.set_xlabel("Time (s) since start")
     ax1.set_ylabel("Acceleration (m/s²)")
-    ax1.set_title(f"Accelerometer with K-Sim Noise Added, compare to expected - {config_title}")
+    ax1.set_title(f"Accelerometer with K-Sim Noise Added (noise level {noise_level}), compare to expected - {config_title}")
     ax1.legend(loc="upper left")
     ax1.grid(True)
 
