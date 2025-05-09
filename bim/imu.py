@@ -6,6 +6,7 @@ import math
 import os
 import time
 from datetime import datetime
+from time import perf_counter, time as now
 
 import colorlogging
 import numpy as np
@@ -14,22 +15,27 @@ from pykos import KOS
 logger = logging.getLogger(__name__)
 colorlogging.configure()
 
-from typing import List, Dict, Any
+from typing import List
 
 
 async def sample_loop(
-    kos: KOS, imu_kos: KOS, DATA: List[float], duration: float, actuator_id: int
+    kos: KOS, imu_kos: KOS, DATA: List[dict], duration: float, actuator_id: int
 ):
     sampling_rate = 100.0  # Hz
-    end = time.monotonic() + duration + 2  # +2.0 for extra data at end
-    while time.monotonic() < end:
-        loop_t0 = time.monotonic()
+    sampling_period = 1.0 / sampling_rate
+    end_time = time.perf_counter() + duration + 2  # +2.0 for extra data at end
+    
+    while time.perf_counter() < end_time:
+        loop_start = time.perf_counter()
+        
+        # Gather all sensor data
         state = await kos.actuator.get_actuators_state([actuator_id])
         raw_data = await imu_kos.imu.get_imu_values()
         quat = await imu_kos.imu.get_quaternion()
+        current_time = time.perf_counter()
 
         next_entry = {
-            "time": time.time(),
+            "time": current_time,
             "position": state.states[0].position,
             "accel_xyz": (raw_data.accel_x, raw_data.accel_y, raw_data.accel_z),
             "gyro_xyz": (raw_data.gyro_x, raw_data.gyro_y, raw_data.gyro_z),
@@ -37,15 +43,18 @@ async def sample_loop(
             "quat_xyzw": (quat.x, quat.y, quat.z, quat.w),
         }
         DATA.append(next_entry)
-        await asyncio.sleep(max(0, 1.0 / sampling_rate - (time.monotonic() - loop_t0)))
-        if 1.0 / sampling_rate - (time.monotonic() - loop_t0) > 0.0:
-            logger.warning(
-                f"Loop overran by {1.0 / sampling_rate - (time.monotonic() - loop_t0)} seconds"
-            )
+        
+        elapsed = time.perf_counter() - loop_start
+        sleep_time = sampling_period - elapsed
+        
+        if sleep_time < 0:
+            logger.warning(f"Sampling loop overran by {-sleep_time:.6f} seconds")
+        else:
+            await asyncio.sleep(sleep_time)
 
 
 def save_data(
-    DATA: List[float],
+    DATA: List[dict],
     input_type: str,
     sim: bool,
     title: str,
@@ -56,29 +65,32 @@ def save_data(
 
     simorreal = "sim" if sim else "real"
 
+    collect_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     final_data = {
         "config": {
             "input_type": input_type,
-            "collected_on": datetime.now().strftime("%Y%m%d_%H%M%S"),
+            "collected_on": collect_time,
             "mode": simorreal,
             "actuator_id": actuator_id,
             "amplitude": amplitude,
             "duration": duration,
+            "title": title,
         },
         "data": DATA,
     }
 
-    fldr_name = f"DATA/{datetime.now().strftime('%Y%m%d')}/{input_type}"
+    fldr_name = f"DATA/{collect_time.split('_')[0]}/{input_type}"
     os.makedirs(fldr_name, exist_ok=True)
-    with open(f"{fldr_name}/{simorreal}_{title}.json", "w") as f:
+    with open(f"{fldr_name}/{simorreal}_{collect_time}{title}.json", "w") as f:
         json.dump(final_data, f, indent=2)
-        logger.info(f"Saved data to {fldr_name}/{simorreal}_{title}.json")
+        logger.info(f"Saved data to {fldr_name}/{simorreal}_{collect_time}{title}.json")
 
 
 async def run_test(
     kos: KOS,
     imu_kos: KOS,
-    DATA: List[float],
+    DATA: List[dict],
     title: str,
     actuator_id: int,
     input_type: str,
@@ -87,7 +99,7 @@ async def run_test(
     duration: float,
     servo_only: bool,
 ):
-    test_start_time = time.monotonic()
+    test_start_time = time.perf_counter()
 
     if sim:
         await kos.actuator.configure_actuator(
@@ -101,8 +113,8 @@ async def run_test(
     else:
         await kos.actuator.configure_actuator(
             actuator_id=actuator_id,
-            kp=16.0,
-            kd=4.0,
+            kp=30.0,
+            kd=10.0,
             acceleration=200.0,
             torque_enabled=True,
         )
@@ -151,12 +163,15 @@ async def run_test(
         end_freq = 1.5
         start_freq = 0.2
 
+        command_freq = 50 #hz
+
         k = (end_freq - start_freq) / duration  # Rate of frequency change
         f0 = start_freq
 
-        current_time = time.monotonic() - test_start_time
+        current_time = time.perf_counter() - test_start_time
         while current_time < duration:
-            current_time = time.monotonic() - test_start_time
+            loop_t0 = time.perf_counter()
+            current_time = time.perf_counter() - test_start_time
 
             phase = (
                 2.0
@@ -182,6 +197,10 @@ async def run_test(
             ]
 
             await kos.actuator.command_actuators(commands)
+            if 1.0 / command_freq - (time.perf_counter() - loop_t0) > 0.0:
+                await asyncio.sleep(1.0 / command_freq - (time.perf_counter() - loop_t0))
+            else:
+                logger.warning(f"Chirp loop overran by {time.perf_counter() - loop_t0 - 1.0 / command_freq:.6f} seconds")
     elif input_type == "static":
         pass
     else:
@@ -202,7 +221,7 @@ async def run_test(
         save_data(DATA, **CONFIG)
 
 
-async def main(input_type: str, sim: bool, DATA: List[float], title: str, servo_only: bool):
+async def main(input_type: str, sim: bool, DATA: List[dict], title: str, servo_only: bool):
 
     CONFIG = {
         "actuator_id": 1,
@@ -242,12 +261,12 @@ if __name__ == "__main__":
         "--input_type", type=str, choices=["step", "chirp", "static"], default="step"
     )
     parser.add_argument(
-        "--title", type=str, default=datetime.now().strftime("%Y%m%d_%H%M%S")
+        "--title", type=str, default=""
     )
     parser.add_argument(
         "--servo_only", action="store_true"
     )
     args = parser.parse_args()
 
-    DATA: List[float] = []
+    DATA: List[dict] = []
     asyncio.run(main(args.input_type, args.sim, DATA, args.title, args.servo_only))
