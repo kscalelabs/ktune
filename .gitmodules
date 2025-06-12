@@ -1,0 +1,3 @@
+[submodule "bim/imu"]
+	path = bim/imu
+	url = git@github.com:kscalelabs/imu.git
